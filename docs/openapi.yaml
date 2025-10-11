@@ -1,0 +1,562 @@
+openapi: 3.0.3
+info:
+  title: Parcial1Web - Sistema de Autenticación API
+  description: |
+    API REST completa para sistema de autenticación con JWT en Flask.
+    
+    ## Características principales:
+    - 🔐 Registro de usuarios con validación robusta
+    - 🚪 Sistema de login con JWT (Access + Refresh tokens)
+    - 🔄 Refresh de tokens automático
+    - 👤 Gestión de perfil de usuario
+    - 🚫 Logout flexible (específico o total)
+    - 🛡️ Seguridad con hash bcrypt y tokens JWT
+    
+    ## Flujo de autenticación recomendado:
+    1. **Registro**: `POST /auth/register` - Crear nueva cuenta
+    2. **Login**: `POST /auth/login` - Obtener tokens JWT
+    3. **Usar API**: Incluir `Authorization: Bearer {access_token}` en headers
+    4. **Refresh**: `POST /auth/refresh` - Renovar access token cuando expire
+    5. **Logout**: `POST /auth/logout` - Cerrar sesión y revocar tokens
+    
+    ## Seguridad:
+    - Contraseñas hasheadas con bcrypt (12 rounds)
+    - Access tokens: 1 hora de duración
+    - Refresh tokens: 30 días de duración
+    - Almacenamiento seguro en base de datos PostgreSQL
+  
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@parcial1web.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:5000
+    description: Servidor de desarrollo local
+  - url: https://api.parcial1web.com
+    description: Servidor de producción
+
+paths:
+  /auth/register:
+    post:
+      tags:
+        - Autenticación
+      summary: Registro de nuevo usuario
+      description: |
+        Registra un nuevo usuario en el sistema con validaciones completas.
+        
+        **Validaciones implementadas:**
+        - Email único en la base de datos
+        - Formato de email válido (RFC 5322)
+        - Contraseña mínimo 8 caracteres
+        - Al menos 1 mayúscula, 1 minúscula y 1 número
+        - Hash seguro con bcrypt (12 rounds)
+      
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+            example:
+              email: "usuario@example.com"
+              password: "Password123"
+      
+      responses:
+        '201':
+          description: Usuario registrado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterResponse'
+              example:
+                message: "Usuario registrado exitosamente"
+                user:
+                  id: 1
+                  email: "usuario@example.com"
+                  created_at: "2024-01-15T10:30:00Z"
+                  is_active: true
+        
+        '400':
+          description: Error de validación
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                email_exists:
+                  summary: Email ya existe
+                  value:
+                    error: "El email ya está registrado"
+                weak_password:
+                  summary: Contraseña débil
+                  value:
+                    error: "La contraseña debe contener al menos una letra mayúscula"
+                invalid_email:
+                  summary: Email inválido
+                  value:
+                    error: "Formato de email inválido"
+        
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/login:
+    post:
+      tags:
+        - Autenticación
+      summary: Login de usuario
+      description: |
+        Autentica un usuario y devuelve tokens JWT para acceso a la API.
+        
+        **Tokens generados:**
+        - **Access Token**: Válido por 1 hora, usar en header Authorization
+        - **Refresh Token**: Válido por 30 días, almacenado en BD para seguridad
+      
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              email: "usuario@example.com"
+              password: "Password123"
+      
+      responses:
+        '200':
+          description: Login exitoso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+              example:
+                message: "Login exitoso"
+                access_token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+                refresh_token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+                expires_in: 3600
+                refresh_expires_in: 2592000
+                user:
+                  id: 1
+                  email: "usuario@example.com"
+        
+        '401':
+          description: Credenciales inválidas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "Email o contraseña incorrectos"
+        
+        '400':
+          description: Error de validación
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/me:
+    get:
+      tags:
+        - Usuario
+      summary: Obtener información del usuario actual
+      description: |
+        Devuelve la información del usuario autenticado actualmente.
+        
+        **Requiere autenticación JWT** en el header Authorization.
+      
+      security:
+        - bearerAuth: []
+      
+      responses:
+        '200':
+          description: Información del usuario
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserInfoResponse'
+              example:
+                user:
+                  id: 1
+                  email: "usuario@example.com"
+                  created_at: "2024-01-15T10:30:00Z"
+                  is_active: true
+        
+        '401':
+          description: Token de acceso requerido o inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                msg: "Missing Authorization Header"
+        
+        '404':
+          description: Usuario no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "Usuario no encontrado"
+
+  /auth/refresh:
+    post:
+      tags:
+        - Autenticación
+      summary: Renovar access token
+      description: |
+        Genera un nuevo access token usando un refresh token válido.
+        
+        **Útil cuando:**
+        - El access token ha expirado (1 hora)
+        - Se necesita extender la sesión del usuario
+        - Mantener la sesión activa sin requerir nuevo login
+      
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+            example:
+              refresh_token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+      
+      responses:
+        '200':
+          description: Token renovado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefreshResponse'
+              example:
+                message: "Token refrescado exitosamente"
+                access_token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+                expires_in: 3600
+        
+        '401':
+          description: Refresh token inválido o expirado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_token:
+                  summary: Token inválido
+                  value:
+                    error: "Refresh token inválido o no encontrado"
+                expired_token:
+                  summary: Token expirado
+                  value:
+                    error: "Refresh token expirado"
+
+  /auth/logout:
+    post:
+      tags:
+        - Autenticación
+      summary: Cerrar sesión
+      description: |
+        Cierra la sesión del usuario revocando tokens.
+        
+        **Dos modos de operación:**
+        1. **Logout específico**: Incluir `refresh_token` en body para revocar solo ese token
+        2. **Logout total**: Sin refresh_token en body revoca TODOS los tokens del usuario
+        
+        **Requiere autenticación JWT** en el header Authorization.
+      
+      security:
+        - bearerAuth: []
+      
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogoutRequest'
+            examples:
+              logout_specific:
+                summary: Logout específico (un dispositivo)
+                value:
+                  refresh_token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+              logout_all:
+                summary: Logout total (todos los dispositivos)
+                value: {}
+      
+      responses:
+        '200':
+          description: Logout exitoso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogoutResponse'
+              examples:
+                specific_logout:
+                  summary: Logout específico
+                  value:
+                    message: "Refresh token revocado exitosamente"
+                total_logout:
+                  summary: Logout total
+                  value:
+                    message: "Sesión cerrada exitosamente (todos los dispositivos)"
+        
+        '400':
+          description: Error al revocar token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "Refresh token inválido o ya revocado"
+        
+        '401':
+          description: Token de acceso requerido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/revoke-all:
+    post:
+      tags:
+        - Autenticación
+      summary: Revocar todos los tokens
+      description: |
+        Revoca todos los refresh tokens del usuario de forma explícita.
+        
+        **Útil en casos de:**
+        - Compromiso de seguridad
+        - Cambio de contraseña
+        - Logout forzado de todos los dispositivos
+        
+        **Requiere autenticación JWT** en el header Authorization.
+      
+      security:
+        - bearerAuth: []
+      
+      responses:
+        '200':
+          description: Tokens revocados exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevokeAllResponse'
+              example:
+                message: "Todos los tokens han sido revocados exitosamente"
+        
+        '400':
+          description: Error al revocar tokens
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        
+        '401':
+          description: Token de acceso requerido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT Access Token obtenido del endpoint /auth/login.
+        
+        **Formato:** `Authorization: Bearer {access_token}`
+        
+        **Duración:** 1 hora
+  
+  schemas:
+    # Request Schemas
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email único del usuario
+          example: "usuario@example.com"
+        password:
+          type: string
+          minLength: 8
+          description: |
+            Contraseña del usuario. Debe contener:
+            - Mínimo 8 caracteres
+            - Al menos 1 letra mayúscula
+            - Al menos 1 letra minúscula  
+            - Al menos 1 número
+          example: "Password123"
+    
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email del usuario registrado
+          example: "usuario@example.com"
+        password:
+          type: string
+          description: Contraseña del usuario
+          example: "Password123"
+    
+    RefreshRequest:
+      type: object
+      required:
+        - refresh_token
+      properties:
+        refresh_token:
+          type: string
+          description: Refresh token válido obtenido del login
+          example: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+    
+    LogoutRequest:
+      type: object
+      properties:
+        refresh_token:
+          type: string
+          description: |
+            Refresh token específico a revocar. 
+            Si se omite, se revocan TODOS los tokens del usuario.
+          example: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+    
+    # Response Schemas
+    RegisterResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Usuario registrado exitosamente"
+        user:
+          $ref: '#/components/schemas/User'
+    
+    LoginResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Login exitoso"
+        access_token:
+          type: string
+          description: JWT access token (1 hora de duración)
+        refresh_token:
+          type: string
+          description: JWT refresh token (30 días de duración)
+        expires_in:
+          type: integer
+          description: Duración del access token en segundos
+          example: 3600
+        refresh_expires_in:
+          type: integer
+          description: Duración del refresh token en segundos
+          example: 2592000
+        user:
+          $ref: '#/components/schemas/UserBasic'
+    
+    RefreshResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Token refrescado exitosamente"
+        access_token:
+          type: string
+          description: Nuevo JWT access token
+        expires_in:
+          type: integer
+          description: Duración del nuevo access token en segundos
+          example: 3600
+    
+    UserInfoResponse:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+    
+    LogoutResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Refresh token revocado exitosamente"
+    
+    RevokeAllResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Todos los tokens han sido revocados exitosamente"
+    
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Mensaje de error descriptivo
+          example: "El email ya está registrado"
+        msg:
+          type: string
+          description: Mensaje de error de JWT (flask-jwt-extended)
+          example: "Missing Authorization Header"
+    
+    # Entity Schemas
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID único del usuario
+          example: 1
+        email:
+          type: string
+          format: email
+          description: Email único del usuario
+          example: "usuario@example.com"
+        created_at:
+          type: string
+          format: date-time
+          description: Fecha y hora de registro
+          example: "2024-01-15T10:30:00Z"
+        is_active:
+          type: boolean
+          description: Estado activo del usuario
+          example: true
+    
+    UserBasic:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        email:
+          type: string
+          format: email
+          example: "usuario@example.com"
+
+tags:
+  - name: Autenticación
+    description: |
+      Endpoints para registro, login, refresh y logout de usuarios.
+      Implementa sistema JWT completo con access y refresh tokens.
+  
+  - name: Usuario
+    description: |
+      Endpoints para gestión de información del usuario autenticado.
+      Requieren autenticación JWT válida.
