@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from services.auth_service import register_user
+from services.auth_service import register_user, login_user
 import re
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
@@ -67,6 +67,43 @@ def register():
             }), 201
         else:
             return jsonify({'error': result['message']}), 400
+    
+    except Exception as e:
+        return jsonify({'error': f'Error interno del servidor: {str(e)}'}), 500
+
+@auth_bp.route('/login', methods=['POST'])
+def login():
+    """
+    Endpoint para login de usuarios
+    """
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'error': 'No se proporcionaron datos'}), 400
+        
+        email = data.get('email', '').strip().lower()
+        password = data.get('password', '')
+        
+        # Validaciones básicas
+        if not email or not password:
+            return jsonify({'error': 'Email y contraseña son requeridos'}), 400
+        
+        if not validate_email(email):
+            return jsonify({'error': 'Formato de email inválido'}), 400
+        
+        # Autenticar usuario
+        result = login_user(email, password)
+        
+        if result['success']:
+            return jsonify({
+                'message': 'Login exitoso',
+                'access_token': result['access_token'],
+                'expires_in': result['expires_in'],
+                'user': result['user']
+            }), 200
+        else:
+            return jsonify({'error': result['message']}), 401
     
     except Exception as e:
         return jsonify({'error': f'Error interno del servidor: {str(e)}'}), 500
