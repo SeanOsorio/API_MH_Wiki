@@ -223,3 +223,13 @@ def cleanup_expired_tokens() -> int:
     
     finally:
         db.close()
+
+def get_user_by_id(user_id: int) -> User:
+    """
+    Obtiene un usuario por su ID
+    """
+    db = next(get_db())
+    try:
+        return db.query(User).filter(User.id == user_id, User.is_active == True).first()
+    finally:
+        db.close()

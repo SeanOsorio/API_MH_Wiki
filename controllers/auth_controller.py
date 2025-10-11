@@ -1,5 +1,9 @@
 from flask import Blueprint, request, jsonify
-from services.auth_service import register_user, login_user, refresh_access_token
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from services.auth_service import (
+    register_user, login_user, refresh_access_token,
+    revoke_refresh_token, revoke_all_user_tokens, get_user_by_id
+)
 import re
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
@@ -140,3 +144,78 @@ def refresh():
     
     except Exception as e:
         return jsonify({'error': f'Error interno del servidor: {str(e)}'}), 500
+
+@auth_bp.route("/logout", methods=["POST"])
+@jwt_required()
+def logout():
+    """
+    Endpoint para logout (cierre de sesión) con revocación de tokens
+    """
+    try:
+        user_id = get_jwt_identity()
+        data = request.get_json()
+        refresh_token = data.get("refresh_token") if data else None
+        
+        if refresh_token:
+            # Revocar refresh token específico
+            result = revoke_refresh_token(refresh_token)
+            
+            if result["success"]:
+                return jsonify({"message": result["message"]}), 200
+            else:
+                return jsonify({"error": result["message"]}), 400
+        else:
+            # Revocar todos los tokens del usuario (logout completo)
+            result = revoke_all_user_tokens(user_id)
+            
+            if result["success"]:
+                return jsonify({"message": "Sesión cerrada exitosamente (todos los dispositivos)"}), 200
+            else:
+                return jsonify({"error": result["message"]}), 400
+    
+    except Exception as e:
+        return jsonify({"error": f"Error interno del servidor: {str(e)}"}), 500
+
+@auth_bp.route("/me", methods=["GET"])
+@jwt_required()
+def get_current_user():
+    """
+    Endpoint para obtener información del usuario autenticado
+    """
+    try:
+        user_id = get_jwt_identity()
+        user = get_user_by_id(user_id)
+        
+        if user:
+            return jsonify({
+                "user": {
+                    "id": user.id,
+                    "email": user.email,
+                    "created_at": user.created_at.isoformat(),
+                    "is_active": user.is_active
+                }
+            }), 200
+        else:
+            return jsonify({"error": "Usuario no encontrado"}), 404
+    
+    except Exception as e:
+        return jsonify({"error": f"Error interno del servidor: {str(e)}"}), 500
+
+@auth_bp.route("/revoke-all", methods=["POST"])
+@jwt_required()
+def revoke_all_tokens():
+    """
+    Endpoint para revocar todos los refresh tokens del usuario
+    """
+    try:
+        user_id = get_jwt_identity()
+        
+        result = revoke_all_user_tokens(user_id)
+        
+        if result["success"]:
+            return jsonify({"message": "Todos los tokens han sido revocados exitosamente"}), 200
+        else:
+            return jsonify({"error": result["message"]}), 400
+    
+    except Exception as e:
+        return jsonify({"error": f"Error interno del servidor: {str(e)}"}), 500
