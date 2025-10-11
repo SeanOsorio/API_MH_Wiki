@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from services.auth_service import register_user, login_user
+from services.auth_service import register_user, login_user, refresh_access_token
 import re
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
@@ -99,8 +99,41 @@ def login():
             return jsonify({
                 'message': 'Login exitoso',
                 'access_token': result['access_token'],
+                'refresh_token': result['refresh_token'],
                 'expires_in': result['expires_in'],
+                'refresh_expires_in': result['refresh_expires_in'],
                 'user': result['user']
+            }), 200
+        else:
+            return jsonify({'error': result['message']}), 401
+    
+    except Exception as e:
+        return jsonify({'error': f'Error interno del servidor: {str(e)}'}), 500
+
+@auth_bp.route('/refresh', methods=['POST'])
+def refresh():
+    """
+    Endpoint para refrescar access token usando refresh token
+    """
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'error': 'No se proporcionaron datos'}), 400
+        
+        refresh_token = data.get('refresh_token')
+        
+        if not refresh_token:
+            return jsonify({'error': 'Refresh token es requerido'}), 400
+        
+        # Refrescar token
+        result = refresh_access_token(refresh_token)
+        
+        if result['success']:
+            return jsonify({
+                'message': 'Token refrescado exitosamente',
+                'access_token': result['access_token'],
+                'expires_in': result['expires_in']
             }), 200
         else:
             return jsonify({'error': result['message']}), 401

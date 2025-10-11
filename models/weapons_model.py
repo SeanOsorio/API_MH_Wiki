@@ -1,6 +1,7 @@
 
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean, Text
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
 from datetime import datetime
 
 Base = declarative_base()
@@ -14,6 +15,22 @@ class User(Base):
 	is_active = Column(Boolean, default=True, nullable=False)
 	created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 	updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+	
+	# Relación con refresh tokens
+	refresh_tokens = relationship("RefreshToken", back_populates="user", cascade="all, delete-orphan")
+
+# Modelo para refresh tokens
+class RefreshToken(Base):
+	__tablename__ = 'refresh_tokens'
+	id = Column(Integer, primary_key=True, autoincrement=True)
+	token = Column(Text, nullable=False, unique=True, index=True)
+	user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+	expires_at = Column(DateTime, nullable=False)
+	is_revoked = Column(Boolean, default=False, nullable=False)
+	created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+	
+	# Relación con usuario
+	user = relationship("User", back_populates="refresh_tokens")
 
 # Modelo para categorías de armas
 class WeaponCategory(Base):
