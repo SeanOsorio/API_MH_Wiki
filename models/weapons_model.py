@@ -1,8 +1,19 @@
 
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean
 from sqlalchemy.ext.declarative import declarative_base
+from datetime import datetime
 
 Base = declarative_base()
+
+# Modelo para usuarios
+class User(Base):
+	__tablename__ = 'users'
+	id = Column(Integer, primary_key=True, autoincrement=True)
+	email = Column(String(120), nullable=False, unique=True, index=True)
+	password_hash = Column(String(128), nullable=False)
+	is_active = Column(Boolean, default=True, nullable=False)
+	created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+	updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
 # Modelo para categorías de armas
 class WeaponCategory(Base):
