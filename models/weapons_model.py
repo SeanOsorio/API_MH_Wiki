@@ -6,17 +6,33 @@ from datetime import datetime
 
 Base = declarative_base()
 
+# Modelo para roles
+class Role(Base):
+	__tablename__ = 'roles'
+	id = Column(Integer, primary_key=True, autoincrement=True)
+	name = Column(String(50), nullable=False, unique=True)
+	description = Column(String(255), nullable=True)
+	permissions = Column(Text, nullable=True)  # JSON string con permisos
+	is_active = Column(Boolean, default=True, nullable=False)
+	created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+	
+	# Relación con usuarios
+	users = relationship("User", back_populates="role")
+
 # Modelo para usuarios
 class User(Base):
 	__tablename__ = 'users'
 	id = Column(Integer, primary_key=True, autoincrement=True)
+	username = Column(String(80), nullable=False, unique=True, index=True)
 	email = Column(String(120), nullable=False, unique=True, index=True)
 	password_hash = Column(String(128), nullable=False)
+	role_id = Column(Integer, ForeignKey('roles.id'), nullable=False, default=2)  # Default: user role
 	is_active = Column(Boolean, default=True, nullable=False)
 	created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 	updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 	
-	# Relación con refresh tokens
+	# Relaciones
+	role = relationship("Role", back_populates="users")
 	refresh_tokens = relationship("RefreshToken", back_populates="user", cascade="all, delete-orphan")
 
 # Modelo para refresh tokens

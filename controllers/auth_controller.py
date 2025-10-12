@@ -2,8 +2,11 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from services.auth_service import (
     register_user, login_user, refresh_access_token,
-    revoke_refresh_token, revoke_all_user_tokens, get_user_by_id
+    revoke_refresh_token, revoke_all_user_tokens, get_user_by_id,
+    get_user_with_role, update_user_role, get_all_users,
+    get_all_roles, create_role, initialize_default_roles, create_admin_user
 )
+from services.auth_decorators import require_admin, require_role, require_permission, require_own_resource_or_admin
 import re
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
@@ -36,7 +39,7 @@ def validate_password(password: str) -> dict:
 @auth_bp.route('/register', methods=['POST'])
 def register():
     """
-    Endpoint para registro de usuarios
+    Endpoint para registro de usuarios con rol
     """
     try:
         data = request.get_json()
@@ -44,10 +47,15 @@ def register():
         if not data:
             return jsonify({'error': 'No se proporcionaron datos'}), 400
         
+        username = data.get('username', '').strip()
         email = data.get('email', '').strip().lower()
         password = data.get('password', '')
+        role = data.get('role', 'user')  # Rol por defecto: user
         
         # Validaciones
+        if not username:
+            return jsonify({'error': 'El username es requerido'}), 400
+            
         if not email:
             return jsonify({'error': 'El email es requerido'}), 400
         
@@ -62,7 +70,7 @@ def register():
             return jsonify({'error': password_validation['message']}), 400
         
         # Registrar usuario
-        result = register_user(email, password)
+        result = register_user(username, email, password, role)
         
         if result['success']:
             return jsonify({
@@ -78,7 +86,7 @@ def register():
 @auth_bp.route('/login', methods=['POST'])
 def login():
     """
-    Endpoint para login de usuarios
+    Endpoint para login de usuarios (username o email)
     """
     try:
         data = request.get_json()
@@ -86,18 +94,15 @@ def login():
         if not data:
             return jsonify({'error': 'No se proporcionaron datos'}), 400
         
-        email = data.get('email', '').strip().lower()
+        username = data.get('username', '').strip()
         password = data.get('password', '')
         
         # Validaciones básicas
-        if not email or not password:
-            return jsonify({'error': 'Email y contraseña son requeridos'}), 400
-        
-        if not validate_email(email):
-            return jsonify({'error': 'Formato de email inválido'}), 400
+        if not username or not password:
+            return jsonify({'error': 'Username/email y contraseña son requeridos'}), 400
         
         # Autenticar usuario
-        result = login_user(email, password)
+        result = login_user(username, password)
         
         if result['success']:
             return jsonify({
@@ -180,20 +185,15 @@ def logout():
 @jwt_required()
 def get_current_user():
     """
-    Endpoint para obtener información del usuario autenticado
+    Endpoint para obtener información completa del usuario autenticado (con rol)
     """
     try:
         user_id = get_jwt_identity()
-        user = get_user_by_id(user_id)
+        user_data = get_user_with_role(user_id)
         
-        if user:
+        if user_data:
             return jsonify({
-                "user": {
-                    "id": user.id,
-                    "email": user.email,
-                    "created_at": user.created_at.isoformat(),
-                    "is_active": user.is_active
-                }
+                "user": user_data
             }), 200
         else:
             return jsonify({"error": "Usuario no encontrado"}), 404
@@ -219,3 +219,177 @@ def revoke_all_tokens():
     
     except Exception as e:
         return jsonify({"error": f"Error interno del servidor: {str(e)}"}), 500
+
+# ==========================================
+# 🛡️ ENDPOINTS DE GESTIÓN DE ROLES
+# ==========================================
+
+@auth_bp.route("/roles", methods=["GET"])
+@jwt_required()
+@require_permission('admin', 'role_management')
+def get_roles():
+    """
+    Endpoint para obtener todos los roles disponibles (solo admins)
+    """
+    try:
+        roles = get_all_roles()
+        return jsonify({
+            "message": "Roles obtenidos exitosamente",
+            "roles": roles,
+            "total": len(roles)
+        }), 200
+    
+    except Exception as e:
+        return jsonify({"error": f"Error interno del servidor: {str(e)}"}), 500
+
+@auth_bp.route("/roles", methods=["POST"])
+@jwt_required()
+@require_admin()
+def create_new_role():
+    """
+    Endpoint para crear un nuevo rol (solo administradores)
+    """
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'error': 'No se proporcionaron datos'}), 400
+        
+        name = data.get('name', '').strip()
+        description = data.get('description', '')
+        permissions = data.get('permissions', [])
+        
+        if not name:
+            return jsonify({'error': 'El nombre del rol es requerido'}), 400
+        
+        if not isinstance(permissions, list):
+            return jsonify({'error': 'Los permisos deben ser una lista'}), 400
+        
+        role, message = create_role(name, description, permissions)
+        
+        if role:
+            return jsonify({
+                'message': message,
+                'role': {
+                    'id': role.id,
+                    'name': role.name,
+                    'description': role.description,
+                    'permissions': permissions
+                }
+            }), 201
+        else:
+            return jsonify({'error': message}), 400
+    
+    except Exception as e:
+        return jsonify({'error': f'Error interno del servidor: {str(e)}'}), 500
+
+# ==========================================
+# 👥 ENDPOINTS DE GESTIÓN DE USUARIOS
+# ==========================================
+
+@auth_bp.route("/users", methods=["GET"])
+@jwt_required()
+@require_permission('admin', 'user_management')
+def get_all_users_endpoint():
+    """
+    Endpoint para obtener todos los usuarios (solo admins y moderadores)
+    """
+    try:
+        users = get_all_users()
+        return jsonify({
+            "message": "Usuarios obtenidos exitosamente",
+            "users": users,
+            "total": len(users)
+        }), 200
+    
+    except Exception as e:
+        return jsonify({"error": f"Error interno del servidor: {str(e)}"}), 500
+
+@auth_bp.route("/users/<int:user_id>", methods=["GET"])
+@jwt_required()
+@require_own_resource_or_admin()
+def get_user_profile(user_id):
+    """
+    Endpoint para obtener perfil de usuario específico
+    Los usuarios pueden ver su propio perfil, los admins pueden ver cualquiera
+    """
+    try:
+        user_data = get_user_with_role(user_id)
+        
+        if user_data:
+            return jsonify({
+                "message": "Perfil obtenido exitosamente",
+                "user": user_data
+            }), 200
+        else:
+            return jsonify({"error": "Usuario no encontrado"}), 404
+    
+    except Exception as e:
+        return jsonify({"error": f"Error interno del servidor: {str(e)}"}), 500
+
+@auth_bp.route("/users/<int:user_id>/role", methods=["PUT"])
+@jwt_required()
+@require_admin()
+def change_user_role(user_id):
+    """
+    Endpoint para cambiar el rol de un usuario (solo administradores)
+    """
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'error': 'No se proporcionaron datos'}), 400
+        
+        new_role = data.get('role', '').strip()
+        
+        if not new_role:
+            return jsonify({'error': 'El nuevo rol es requerido'}), 400
+        
+        user, message = update_user_role(user_id, new_role)
+        
+        if user:
+            return jsonify({
+                'message': message,
+                'user': {
+                    'id': user.id,
+                    'username': user.username,
+                    'email': user.email,
+                    'new_role': new_role
+                }
+            }), 200
+        else:
+            return jsonify({'error': message}), 400
+    
+    except Exception as e:
+        return jsonify({'error': f'Error interno del servidor: {str(e)}'}), 500
+
+# ==========================================
+# 🏗️ ENDPOINT DE INICIALIZACIÓN
+# ==========================================
+
+@auth_bp.route("/init", methods=["POST"])
+def initialize_system():
+    """
+    Endpoint para inicializar el sistema con roles y usuario admin por defecto
+    ⚠️ Solo debe usarse en desarrollo o primera instalación
+    """
+    try:
+        # Crear roles por defecto
+        created_roles = initialize_default_roles()
+        
+        # Crear usuario admin por defecto
+        admin_user = create_admin_user()
+        
+        return jsonify({
+            'message': 'Sistema inicializado exitosamente',
+            'created_roles': created_roles,
+            'admin_created': admin_user is not None,
+            'admin_credentials': {
+                'username': 'admin',
+                'password': 'admin123',
+                'note': '⚠️ Cambia esta contraseña inmediatamente'
+            } if admin_user else None
+        }), 200
+    
+    except Exception as e:
+        return jsonify({'error': f'Error al inicializar sistema: {str(e)}'}), 500

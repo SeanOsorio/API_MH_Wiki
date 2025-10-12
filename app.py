@@ -4,20 +4,106 @@
 🚀 Parcial1Web - Sistema de Autenticación API
 ==============================================
 
+¡ZERO CONFIGURATION REQUIRED!
+
 Ejecuta este archivo para iniciar la aplicación completa:
     python app.py
 
-El sistema se auto-configura automáticamente al iniciar.
+El sistema se auto-instala y auto-configura TODO automáticamente.
 """
 
 import os
 import sys
+import subprocess
 from pathlib import Path
-from datetime import timedelta
-from flask import Flask, jsonify
-from flask_jwt_extended import JWTManager
-from controllers.weapons_controller import weapons_bp
-from controllers.auth_controller import auth_bp
+
+def auto_install_dependencies():
+    """
+    🚀 Auto-instalación de dependencias
+    Instala automáticamente todas las dependencias si no están disponibles
+    """
+    print("🔍 Verificando dependencias...")
+    
+    # Lista de paquetes principales necesarios
+    required_packages = [
+        'flask',
+        'flask-jwt-extended', 
+        'flask-bcrypt',
+        'sqlalchemy',
+        'python-dotenv',
+        'psycopg2',
+        'requests'  # Para el validador de colección
+    ]
+    
+    missing_packages = []
+    
+    # Verificar qué paquetes faltan
+    for package in required_packages:
+        try:
+            __import__(package.replace('-', '_'))
+        except ImportError:
+            missing_packages.append(package)
+    
+    if missing_packages:
+        print(f"📦 Instalando dependencias faltantes: {', '.join(missing_packages)}")
+        
+        # Instalar desde requirements.txt si existe
+        requirements_file = Path('requirements.txt')
+        if requirements_file.exists():
+            try:
+                print("📋 Instalando desde requirements.txt...")
+                result = subprocess.run([
+                    sys.executable, '-m', 'pip', 'install', '-r', 'requirements.txt'
+                ], capture_output=True, text=True)
+                
+                if result.returncode == 0:
+                    print("✅ Dependencias instaladas desde requirements.txt")
+                else:
+                    print(f"⚠️  Error instalando desde requirements.txt: {result.stderr}")
+                    # Fallback: instalar paquetes individuales
+                    install_packages_individually(missing_packages)
+            except Exception as e:
+                print(f"⚠️  Error con requirements.txt: {e}")
+                install_packages_individually(missing_packages)
+        else:
+            # Instalar paquetes individuales
+            install_packages_individually(missing_packages)
+    else:
+        print("✅ Todas las dependencias están disponibles")
+
+def install_packages_individually(packages):
+    """
+    📦 Instala paquetes de forma individual como fallback
+    """
+    for package in packages:
+        try:
+            print(f"📦 Instalando {package}...")
+            result = subprocess.run([
+                sys.executable, '-m', 'pip', 'install', package
+            ], capture_output=True, text=True)
+            
+            if result.returncode == 0:
+                print(f"✅ {package} instalado correctamente")
+            else:
+                print(f"⚠️  Error instalando {package}: {result.stderr}")
+        except Exception as e:
+            print(f"❌ Error instalando {package}: {e}")
+
+# Auto-instalar dependencias al importar
+auto_install_dependencies()
+
+# Ahora importar los módulos necesarios
+try:
+    from datetime import timedelta
+    from flask import Flask, jsonify
+    from flask_jwt_extended import JWTManager
+    from controllers.weapons_controller import weapons_bp
+    from controllers.auth_controller import auth_bp
+    print("✅ Todos los módulos importados correctamente")
+except ImportError as e:
+    print(f"❌ Error importando módulos: {e}")
+    print("💡 Intenta ejecutar manualmente: pip install -r requirements.txt")
+    sys.exit(1)
 
 
 def setup_environment():
@@ -80,6 +166,40 @@ def setup_database():
         print("   - La URL de la base de datos sea correcta")
         print("   - El servidor de base de datos esté ejecutándose")
         print("   - Las credenciales sean válidas")
+        return False
+
+def setup_roles():
+    """
+    🛡️ Configuración automática de roles y usuario administrador
+    Inicializa roles por defecto y crea usuario admin si no existe
+    """
+    print("🛡️ Configurando sistema de roles...")
+    
+    try:
+        from services.auth_service import initialize_default_roles, create_admin_user
+        
+        # Crear roles por defecto
+        created_roles = initialize_default_roles()
+        if created_roles:
+            print(f"✅ Roles creados: {', '.join(created_roles)}")
+        else:
+            print("ℹ️  Los roles ya existen")
+        
+        # Crear usuario administrador por defecto
+        admin_user = create_admin_user()
+        if admin_user:
+            print("✅ Usuario administrador configurado")
+            print("🔑 Credenciales de administrador:")
+            print("   • Username: admin")
+            print("   • Password: admin123")
+            print("   ⚠️  ¡Cambia esta contraseña inmediatamente!")
+        else:
+            print("ℹ️  Usuario administrador ya existe")
+        
+        return True
+    except Exception as e:
+        print(f"❌ Error al configurar roles: {e}")
+        print("💡 Los roles se pueden inicializar manualmente con POST /auth/init")
         return False
 
 
@@ -182,11 +302,15 @@ def print_startup_info():
     print("   • GET /auth/me - Usuario actual")
     print("   • POST /auth/refresh - Renovar token")
     print("   • POST /auth/logout - Cerrar sesión")
-    print("\n🛡️ Endpoints de armas:")
-    print("   • GET /categories - Listar categorías")
-    print("   • POST /categories - Crear categoría")
-    print("   • GET /weapons - Listar armas")
-    print("   • POST /weapons - Crear arma")
+    print("\n� Endpoints de gestión (requieren permisos):")
+    print("   • GET /auth/users - Listar usuarios (admin)")
+    print("   • GET /auth/roles - Listar roles (admin)")
+    print("   • PUT /auth/users/{id}/role - Cambiar rol (admin)")
+    print("\n�🛡️ Endpoints de armas (protegidos por roles):")
+    print("   • GET /categories - Listar categorías (lectura)")
+    print("   • POST /categories - Crear categoría (creación)")
+    print("   • GET /weapons - Listar armas (lectura)")
+    print("   • POST /weapons - Crear arma (creación)")
     print("\n💡 Para probar rápidamente:")
     print("   1. Importar postman/Parcial1Web_Auth_Collection.json en Postman")
     print("   2. O usar: python postman/test_collection.py")
@@ -214,7 +338,11 @@ def main():
             print("🛑 Iniciación cancelada por el usuario")
             sys.exit(1)
     
-    # Paso 3: Crear aplicación Flask
+    # Paso 3: Configurar roles y usuarios por defecto
+    if db_success:
+        setup_roles()
+    
+    # Paso 4: Crear aplicación Flask
     app = create_app()
     
     # Paso 4: Mostrar información de inicio
