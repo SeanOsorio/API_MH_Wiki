@@ -218,5 +218,9 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
-#Base de datos local
+# Bases de datos locales
 monster_hunter.db
+data/
+*.db
+*.sqlite
+*.sqlite3
