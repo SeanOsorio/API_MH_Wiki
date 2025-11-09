@@ -1,0 +1,625 @@
+/* ===================================
+   MONSTER HUNTER WILDS THEME SYSTEM
+   =================================== */
+
+/* Variables de tema - Modo Diurno (Monster Hunter Wilds) */
+:root {
+    /* Colores principales - MH Wilds actualizados */
+    --primary-green: #97b78d;
+    --primary-orange: #c0821a;
+    --primary-earth: #b08e36;
+    --accent-green: #b08e36;
+    --accent-orange: #e0b054;
+    
+    /* Fondos */
+    --bg-primary: #f7f5ef;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #f0ede4;
+    --bg-header: linear-gradient(135deg, #b08e36 0%, #97b78d 100%);
+    --bg-sidebar: #f7f5ef;
+    
+    /* Textos */
+    --text-primary: #2d3319;
+    --text-secondary: #5a6650;
+    --text-muted: #8a8a7a;
+    --text-light: #f7f5ef;
+    --text-logo: #f7f5ef;
+    
+    /* Bordes y sombras */
+    --border-color: #d4cbb8;
+    --shadow-sm: 0 2px 4px rgba(192, 130, 26, 0.1);
+    --shadow-md: 0 4px 12px rgba(192, 130, 26, 0.15);
+    --shadow-lg: 0 8px 24px rgba(192, 130, 26, 0.2);
+    
+    /* Gradientes temáticos */
+    --gradient-primary: linear-gradient(135deg, #b08e36 0%, #97b78d 100%);
+    --gradient-orange: linear-gradient(135deg, #c0821a 0%, #e0b054 100%);
+    --gradient-earth: linear-gradient(135deg, #b08e36 0%, #97b78d 100%);
+}
+
+/* Variables de tema - Modo Nocturno (Monster Hunter Wilds Dark) */
+[data-theme="dark"] {
+    /* Colores principales - Versión oscura actualizada */
+    --primary-green: #97b78d;
+    --primary-orange: #c0821a;
+    --primary-earth: #b08e36;
+    --accent-green: #b08e36;
+    --accent-orange: #e0b054;
+    
+    /* Fondos oscuros mejorados */
+    --bg-primary: #1a1d17;
+    --bg-secondary: #252822;
+    --bg-tertiary: #2f332b;
+    --bg-header: linear-gradient(135deg, #3d3a2d 0%, #4a5244 100%);
+    --bg-sidebar: #252822;
+    
+    /* Textos en modo oscuro */
+    --text-primary: #f7f5ef;
+    --text-secondary: #d4cbb8;
+    --text-muted: #9a9582;
+    --text-light: #f7f5ef;
+    --text-logo: #f7f5ef;
+    
+    /* Bordes y sombras oscuros */
+    --border-color: #3d3a2d;
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.6);
+    
+    /* Gradientes en modo oscuro */
+    --gradient-primary: linear-gradient(135deg, #3d3a2d 0%, #4a5244 100%);
+    --gradient-orange: linear-gradient(135deg, #c0821a 0%, #e0b054 100%);
+    --gradient-earth: linear-gradient(135deg, #5a523d 0%, #6a6a52 100%);
+}
+
+/* ===================================
+   BOTÓN TOGGLE DE TEMA
+   =================================== */
+.theme-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    background: var(--gradient-orange);
+    border: 3px solid var(--primary-orange);
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: var(--shadow-lg);
+    transition: all 0.3s ease;
+}
+
+.theme-toggle:hover {
+    transform: scale(1.1);
+    box-shadow: 0 12px 30px rgba(192, 130, 26, 0.5);
+}
+
+.theme-toggle::before {
+    content: '☀️';
+    font-size: 28px;
+    transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .theme-toggle {
+    background: var(--gradient-orange);
+    border-color: var(--accent-orange);
+}
+
+[data-theme="dark"] .theme-toggle::before {
+    content: '🌙';
+}
+
+/* =============================================================================
+   RESET Y ESTILOS BASE
+   ============================================================================= */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+body {
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg-primary);
+    min-height: 100vh;
+    color: var(--text-primary);
+}
+
+a {
+    color: var(--primary-green);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+a:hover {
+    text-decoration: underline;
+    color: var(--accent-jade);
+}
+
+/* =============================================================================
+   HEADER
+   ============================================================================= */
+.main-header {
+    background: var(--bg-header);
+    border-bottom: 3px solid var(--primary-orange);
+    padding: 0;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+}
+
+.main-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 200"><path d="M0,100 Q300,50 600,100 T1200,100 L1200,200 L0,200 Z" fill="%23000000" opacity="0.1"/></svg>') repeat-x;
+    background-size: 1200px 200px;
+    pointer-events: none;
+}
+
+.header-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+}
+
+.logo-section {
+    flex: 1;
+}
+
+.site-logo {
+    font-size: 48px;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 
+        3px 3px 0 #ff6b35,
+        -1px -1px 0 #000,
+        1px -1px 0 #000,
+        -1px 1px 0 #000,
+        1px 1px 0 #000,
+        4px 4px 10px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+    line-height: 1;
+}
+
+.logo-text {
+    background: var(--gradient-orange);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.3); }
+}
+
+.logo-subtitle {
+    font-size: 18px;
+    font-weight: 400;
+    color: #fff;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    margin-top: 5px;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+}
+
+.top-nav {
+    display: flex;
+    gap: 15px;
+}
+
+.top-nav a {
+    color: #fff;
+    font-size: 12px;
+    text-decoration: none;
+    padding: 5px 10px;
+    border-radius: 3px;
+    transition: background 0.3s;
+}
+
+.top-nav a:hover {
+    background: rgba(255,255,255,0.1);
+    text-decoration: none;
+}
+
+/* =============================================================================
+   LAYOUT
+   ============================================================================= */
+.page-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 250px 1fr;
+    gap: 20px;
+    padding: 20px;
+}
+
+/* =============================================================================
+   SIDEBAR IZQUIERDO
+   ============================================================================= */
+.sidebar-left {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 8px;
+    padding: 0;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.sidebar-section {
+    border-bottom: 2px solid #e0e0e0;
+    padding: 15px;
+}
+
+.sidebar-section:last-child {
+    border-bottom: none;
+}
+
+.sidebar-section h3 {
+    background: linear-gradient(to right, #ff6b35, #ff8c42);
+    color: white;
+    padding: 8px 12px;
+    margin: -15px -15px 15px -15px;
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.search-box {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.search-box input {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+.search-btn {
+    background: var(--primary-orange);
+    border: 1px solid var(--accent-orange);
+    padding: 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.search-btn:hover {
+    background: #ffed4e;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.nav-menu {
+    list-style: none;
+}
+
+.nav-menu li {
+    margin-bottom: 8px;
+}
+
+.nav-menu a {
+    color: #0066cc;
+    font-size: 14px;
+    display: block;
+    padding: 5px 8px;
+    border-radius: 3px;
+    transition: background 0.3s;
+}
+
+.nav-menu a:hover {
+    background: #f0f8ff;
+    text-decoration: none;
+}
+
+.social-links {
+    display: flex;
+    gap: 10px;
+}
+
+.social-icon {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    color: white;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.social-icon.facebook {
+    background: #1877f2;
+}
+
+.social-icon.twitter {
+    background: #000;
+}
+
+.social-icon.pinterest {
+    background: #e60023;
+}
+
+.discord-section p {
+    font-size: 12px;
+    margin-bottom: 10px;
+    line-height: 1.4;
+}
+
+.discord-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #5865f2;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.discord-link:hover {
+    background: #4752c4;
+}
+
+/* =============================================================================
+   CONTENIDO PRINCIPAL
+   ============================================================================= */
+.main-content {
+    background: var(--bg-primary);
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.content-tabs {
+    background: #f5f5f5;
+    border-bottom: 2px solid #e0e0e0;
+    display: flex;
+    gap: 5px;
+    padding: 10px 20px 0;
+}
+
+.tab {
+    padding: 10px 20px;
+    background: var(--bg-secondary);
+    border-radius: 8px 8px 0 0;
+    color: var(--text-secondary);
+    font-weight: 500;
+    transition: all 0.3s;
+}
+
+.tab.active {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+.tab:hover {
+    text-decoration: none;
+    background: #f0f0f0;
+}
+
+.content-body {
+    padding: 30px;
+}
+
+/* =============================================================================
+   PÁGINA DE INICIO
+   ============================================================================= */
+.welcome-banner {
+    background: var(--gradient-orange);
+    padding: 30px;
+    border-radius: 8px;
+    text-align: center;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.welcome-banner h1 {
+    font-size: 36px;
+    color: var(--text-primary);
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 4px rgba(255,255,255,0.3);
+}
+
+.subtitle {
+    font-size: 18px;
+    color: #2c5f7e;
+    margin-bottom: 5px;
+}
+
+.independent {
+    font-size: 14px;
+    color: #0066cc;
+    font-weight: 600;
+}
+
+.intro-section {
+    display: grid;
+    grid-template-columns: 1fr 250px;
+    gap: 30px;
+    margin-bottom: 30px;
+}
+
+.intro-text {
+    line-height: 1.8;
+}
+
+.intro-text p {
+    margin-bottom: 15px;
+}
+
+.intro-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.intro-logo img {
+    max-width: 100%;
+    height: auto;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+}
+
+.inline-discord {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #5865f2;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.inline-discord:hover {
+    background: #4752c4;
+    text-decoration: none;
+}
+
+.news-section {
+    background: var(--bg-secondary);
+    padding: 25px;
+    border-radius: 8px;
+    border-left: 5px solid var(--primary-orange);
+    margin-bottom: 30px;
+}
+
+.news-section h2 {
+    color: var(--text-primary);
+    margin-bottom: 20px;
+    font-size: 28px;
+}
+
+.news-list {
+    list-style: none;
+}
+
+.news-list > li {
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.news-list > li:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+    margin-bottom: 0;
+}
+
+.news-list ul {
+    margin-left: 20px;
+    margin-top: 10px;
+}
+
+.news-list ul li {
+    margin-bottom: 8px;
+}
+
+.date {
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.quick-links {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+}
+
+.link-box {
+    background: linear-gradient(135deg, #ff6b35 0%, #ff8c42 100%);
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    transition: all 0.3s;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.link-box:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 12px rgba(0,0,0,0.2);
+}
+
+.link-box h3 {
+    margin: 0;
+}
+
+.link-box a {
+    color: white;
+    font-size: 18px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.link-box a:hover {
+    text-decoration: none;
+}
+
+/* =============================================================================
+   RESPONSIVE
+   ============================================================================= */
+@media (max-width: 1024px) {
+    .page-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .sidebar-left {
+        order: 2;
+    }
+    
+    .intro-section {
+        grid-template-columns: 1fr;
+    }
+    
+    .intro-logo {
+        order: -1;
+    }
+    
+    .quick-links {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .site-logo {
+        font-size: 32px;
+    }
+    
+    .logo-subtitle {
+        font-size: 14px;
+    }
+    
+    .top-nav {
+        flex-wrap: wrap;
+        font-size: 11px;
+    }
+    
+    .quick-links {
+        grid-template-columns: 1fr;
+    }
+}

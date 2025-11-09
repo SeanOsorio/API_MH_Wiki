@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}{{ section }} - MonsterHunterWiki{% endblock %}
+
+{% block content %}
+<div class="coming-soon-container">
+    <div class="coming-soon-content">
+        <div class="icon">🚧</div>
+        <h1>{{ section }}</h1>
+        <h2>Próximamente</h2>
+        <p>Esta sección está en desarrollo y estará disponible pronto.</p>
+        <p>Mientras tanto, puedes explorar:</p>
+        <div class="quick-actions">
+            <a href="/" class="action-btn">🏠 Inicio</a>
+            <a href="/weapons" class="action-btn">🗡️ Armas</a>
+        </div>
+    </div>
+</div>
+
+<style>
+.coming-soon-container {
+    min-height: 60vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+}
+
+.coming-soon-content {
+    text-align: center;
+    max-width: 600px;
+}
+
+.icon {
+    font-size: 120px;
+    margin-bottom: 20px;
+    animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+}
+
+.coming-soon-content h1 {
+    color: #1a3d5c;
+    font-size: 48px;
+    margin-bottom: 10px;
+}
+
+.coming-soon-content h2 {
+    color: #ff6b35;
+    font-size: 32px;
+    margin-bottom: 20px;
+}
+
+.coming-soon-content p {
+    color: #666;
+    font-size: 18px;
+    line-height: 1.8;
+    margin-bottom: 15px;
+}
+
+.quick-actions {
+    margin-top: 40px;
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+}
+
+.action-btn {
+    background: linear-gradient(135deg, #ff6b35 0%, #ff8c42 100%);
+    color: white;
+    padding: 15px 30px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 18px;
+    transition: all 0.3s;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.action-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+    text-decoration: none;
+}
+</style>
+{% endblock %}

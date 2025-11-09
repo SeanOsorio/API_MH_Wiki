@@ -57,13 +57,7 @@ def list_categories():
         500: Error interno del servidor
     """
     categories = get_all_categories()
-    return jsonify([
-        {
-            'id': c.id, 
-            'name': c.name, 
-            'description': c.description
-        } for c in categories
-    ])
+    return jsonify(categories)
 
 
 @weapons_bp.route('/categories/<int:category_id>', methods=['GET'])
@@ -83,11 +77,7 @@ def get_category(category_id):
     """
     category = get_category_by_id(category_id)
     if category:
-        return jsonify({
-            'id': category.id, 
-            'name': category.name, 
-            'description': category.description
-        })
+        return jsonify(category)
     return jsonify({'error': 'Categoría no encontrada'}), 404
 
 
@@ -125,14 +115,8 @@ def get_category_weapons(category_id):
         
         weapons = get_weapons_by_category(category_id)
         return jsonify({
-            'category': {'id': category.id, 'name': category.name},
-            'weapons': [
-                {
-                    'id': w.id, 
-                    'name': w.name, 
-                    'description': w.description
-                } for w in weapons
-            ]
+            'category': category,
+            'weapons': weapons
         })
     except Exception as e:
         return jsonify({'error': f'Error al obtener las armas: {str(e)}'}), 500
@@ -172,11 +156,7 @@ def create_new_category():
             return jsonify({'error': 'El campo name es obligatorio'}), 400
         
         category = create_category(data)
-        return jsonify({
-            'id': category.id, 
-            'name': category.name, 
-            'description': category.description
-        }), 201
+        return jsonify(category), 201
         
     except Exception as e:
         return jsonify({'error': f'Error al crear la categoría: {str(e)}'}), 500
@@ -207,11 +187,7 @@ def update_category_endpoint(category_id):
     data = request.json
     category = update_category(category_id, data)
     if category:
-        return jsonify({
-            'id': category.id, 
-            'name': category.name, 
-            'description': category.description
-        })
+        return jsonify(category)
     return jsonify({'error': 'Categoría no encontrada'}), 404
 
 
@@ -264,14 +240,7 @@ def list_weapons():
         200: Lista retornada correctamente
     """
     weapons = get_all_weapons()
-    return jsonify([
-        {
-            'id': w.id, 
-            'name': w.name, 
-            'category_id': w.category_id, 
-            'description': w.description
-        } for w in weapons
-    ])
+    return jsonify(weapons)
 
 
 @weapons_bp.route('/weapons/<int:weapon_id>', methods=['GET'])
@@ -291,12 +260,7 @@ def get_weapon(weapon_id):
     """
     weapon = get_weapon_by_id(weapon_id)
     if weapon:
-        return jsonify({
-            'id': weapon.id, 
-            'name': weapon.name, 
-            'category_id': weapon.category_id, 
-            'description': weapon.description
-        })
+        return jsonify(weapon)
     return jsonify({'error': 'Arma no encontrada'}), 404
 
 
@@ -351,12 +315,7 @@ def create_new_weapon():
             }), 404
         
         weapon = create_weapon(data)
-        return jsonify({
-            'id': weapon.id, 
-            'name': weapon.name, 
-            'category_id': weapon.category_id, 
-            'description': weapon.description
-        }), 201
+        return jsonify(weapon), 201
         
     except Exception as e:
         return jsonify({'error': f'Error al crear el arma: {str(e)}'}), 500
@@ -388,12 +347,7 @@ def update_weapon_endpoint(weapon_id):
     data = request.json
     weapon = update_weapon(weapon_id, data)
     if weapon:
-        return jsonify({
-            'id': weapon.id, 
-            'name': weapon.name, 
-            'category_id': weapon.category_id, 
-            'description': weapon.description
-        })
+        return jsonify(weapon)
     return jsonify({'error': 'Arma no encontrada'}), 404
 
 

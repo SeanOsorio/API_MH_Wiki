@@ -1,4 +1,3 @@
-
 """
 Monster Hunter Weapons API - Aplicación Principal
 
@@ -19,10 +18,15 @@ Repositorio: https://github.com/SeanOsorio/ClassApi
 Licencia: MIT
 """
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, render_template
 from controllers.weapons_controller import weapons_bp
-from config.database import init_db
-from __version__ import __version__, __title__, RELEASE_NAME
+from config.database import init_db, get_db
+from models.weapons_model import WeaponCategory, Weapon
+
+# Información de versión
+__version__ = "2.0.0"
+__title__ = "Monster Hunter Wiki"
+RELEASE_NAME = "Monster Hunter Wilds Edition"
 
 # =============================================================================
 # INICIALIZACIÓN DE LA APLICACIÓN FLASK
@@ -71,20 +75,21 @@ print("✅ Base de datos inicializada")
 
 # Registrar blueprint de armas y categorías
 # Esto incluye todos los endpoints definidos en weapons_controller.py
-app.register_blueprint(weapons_bp)
+# Registrar las rutas de la API con el prefijo /api
+app.register_blueprint(weapons_bp, url_prefix='/api')
 
 print("🛣️  Rutas registradas:")
-print("   • GET    /categories              - Listar categorías")
-print("   • POST   /categories              - Crear categoría")  
-print("   • GET    /categories/{id}         - Obtener categoría")
-print("   • PUT    /categories/{id}         - Actualizar categoría")
-print("   • DELETE /categories/{id}         - Eliminar categoría")
-print("   • GET    /categories/{id}/weapons - Armas por categoría")
-print("   • GET    /weapons                 - Listar armas")
-print("   • POST   /weapons                 - Crear arma")
-print("   • GET    /weapons/{id}            - Obtener arma")
-print("   • PUT    /weapons/{id}            - Actualizar arma")
-print("   • DELETE /weapons/{id}            - Eliminar arma")
+print("   • GET    /api/categories              - Listar categorías")
+print("   • POST   /api/categories              - Crear categoría")  
+print("   • GET    /api/categories/{id}         - Obtener categoría")
+print("   • PUT    /api/categories/{id}         - Actualizar categoría")
+print("   • DELETE /api/categories/{id}         - Eliminar categoría")
+print("   • GET    /api/categories/{id}/weapons - Armas por categoría")
+print("   • GET    /api/weapons                 - Listar armas")
+print("   • POST   /api/weapons                 - Crear arma")
+print("   • GET    /api/weapons/{id}            - Obtener arma")
+print("   • PUT    /api/weapons/{id}            - Actualizar arma")
+print("   • DELETE /api/weapons/{id}            - Eliminar arma")
 
 # =============================================================================
 # ENDPOINTS ADICIONALES
@@ -93,23 +98,76 @@ print("   • DELETE /weapons/{id}            - Eliminar arma")
 @app.route('/')
 def home():
     """
-    Endpoint raíz que proporciona información básica de la API.
+    Página de inicio de MonsterHunterWiki
     
     Returns:
-        JSON: Información de bienvenida y enlaces útiles
+        HTML: Página de inicio renderizada
     """
-    return jsonify({
-        'message': '🏹 Monster Hunter Weapons API',
-        'version': '1.0.0',
-        'description': 'API REST para gestión de categorías y armas de Monster Hunter',
-        'endpoints': {
-            'categories': '/categories',
-            'weapons': '/weapons',
-            'documentation': 'https://github.com/SeanOsorio/ClassApi'
-        },
-        'status': 'online',
-        'author': 'Sean Osorio'
-    })
+    return render_template('index.html')
+
+@app.route('/weapons')
+def weapons_page():
+    """Página principal de armas - muestra categorías"""
+    return render_template('weapons_categories.html')
+
+@app.route('/weapons/category/<int:category_id>')
+def weapons_by_category_page(category_id):
+    """Página de armas por categoría"""
+    return render_template('weapons_list.html', category_id=category_id)
+
+@app.route('/weapons/<int:weapon_id>')
+def weapon_detail_page(weapon_id):
+    """Página de detalle de un arma específica"""
+    return render_template('weapon_detail.html', weapon_id=weapon_id)
+
+@app.route('/monsters')
+def monsters_page():
+    """Página de monstruos (próximamente)"""
+    return render_template('coming_soon.html', section='Monstruos')
+
+@app.route('/items')
+def items_page():
+    """Página de objetos (próximamente)"""
+    return render_template('coming_soon.html', section='Objetos')
+
+@app.route('/armor')
+def armor_page():
+    """Página de armaduras (próximamente)"""
+    return render_template('coming_soon.html', section='Armaduras')
+
+@app.route('/quests')
+def quests_page():
+    """Página de misiones (próximamente)"""
+    return render_template('coming_soon.html', section='Misiones')
+
+@app.route('/api/stats')
+def api_stats():
+    """
+    Endpoint para obtener estadísticas de la wiki
+    
+    Returns:
+        JSON: Estadísticas de artículos
+    """
+    try:
+        db = next(get_db())
+        categories_count = db.query(WeaponCategory).count()
+        weapons_count = db.query(Weapon).count()
+        total_articles = categories_count + weapons_count + 850  # + contenido base
+        
+        return jsonify({
+            'total_articles': total_articles,
+            'categories': categories_count,
+            'weapons': weapons_count,
+            'status': 'online'
+        })
+    except Exception as e:
+        return jsonify({
+            'total_articles': 1000,
+            'status': 'error',
+            'message': str(e)
+        }), 500
+    finally:
+        db.close()
 
 @app.route('/health')
 def health_check():

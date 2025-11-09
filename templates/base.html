@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}MonsterHunterWiki{% endblock %} - La enciclopedia Monster Hunter</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Botón de toggle de tema (Monster Hunter Wilds Style) -->
+    <button class="theme-toggle" id="themeToggle" aria-label="Cambiar tema"></button>
+    
+    <!-- Header con logo -->
+    <header class="main-header">
+        <div class="header-content">
+            <div class="logo-section">
+                <h1 class="site-logo">
+                    <span class="logo-text">MonsterHunterWiki</span>
+                    <span class="logo-subtitle">la enciclopedia Monster Hunter</span>
+                </h1>
+            </div>
+            <div class="header-right">
+                <nav class="top-nav">
+                    <a href="#">español (américa)</a>
+                    <a href="#">no has accedido</a>
+                    <a href="#">discusión</a>
+                    <a href="#">contribuciones</a>
+                    <a href="#">acceder/crear cuenta</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <div class="page-container">
+        <!-- Sidebar izquierdo -->
+        <aside class="sidebar-left">
+            <div class="sidebar-section search-section">
+                <h3>Buscar</h3>
+                <div class="search-box">
+                    <input type="text" placeholder="Buscar en MonsterHunterWiki" id="searchInput">
+                    <button class="search-btn">Ir</button>
+                    <button class="search-btn">Buscar</button>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Navegación</h3>
+                <ul class="nav-menu">
+                    <li><a href="/">MonsterHunterWiki</a></li>
+                    <li><a href="/weapons">Armas</a></li>
+                    <li><a href="/monsters">Monstruos</a></li>
+                    <li><a href="/items">Objetos</a></li>
+                    <li><a href="/armor">Armaduras</a></li>
+                    <li><a href="/quests">Misiones</a></li>
+                </ul>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Cómo colaborar</h3>
+                <ul class="nav-menu">
+                    <li><a href="#">Comunidad</a></li>
+                    <li><a href="#">Ayuda</a></li>
+                </ul>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Compartir</h3>
+                <div class="social-links">
+                    <a href="#" class="social-icon facebook">f</a>
+                    <a href="#" class="social-icon twitter">X</a>
+                    <a href="#" class="social-icon pinterest">P</a>
+                </div>
+            </div>
+
+            <div class="sidebar-section discord-section">
+                <h3>Discord</h3>
+                <p>Conversa con otros usuarios de MonsterHunterWiki en el chat de Discord</p>
+                <a href="#" class="discord-link">
+                    <img src="https://img.icons8.com/color/48/discord-logo.png" alt="Discord" width="24">
+                    Discord
+                </a>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Herramientas</h3>
+                <ul class="nav-menu">
+                    <li><a href="#">Cambios recientes</a></li>
+                </ul>
+            </div>
+        </aside>
+
+        <!-- Contenido principal -->
+        <main class="main-content">
+            <nav class="content-tabs">
+                <a href="#" class="tab active">Portada</a>
+                <a href="#" class="tab">Discusión</a>
+                <a href="#" class="tab">Ver código fuente</a>
+                <a href="#" class="tab">Historial</a>
+            </nav>
+
+            <div class="content-body">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    
+    <!-- Script para el toggle de temas Monster Hunter Wilds -->
+    <script>
+        // Cargar tema guardado o usar por defecto 'light'
+        const savedTheme = localStorage.getItem('mh-theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        
+        // Toggle de tema
+        const themeToggle = document.getElementById('themeToggle');
+        if (themeToggle) {
+            themeToggle.addEventListener('click', () => {
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                
+                document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('mh-theme', newTheme);
+                
+                // Animación del botón
+                themeToggle.style.transform = 'rotate(360deg) scale(1.2)';
+                setTimeout(() => {
+                    themeToggle.style.transform = '';
+                }, 300);
+            });
+        }
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

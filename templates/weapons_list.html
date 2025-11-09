@@ -1,0 +1,324 @@
+{% extends "base.html" %}
+
+{% block title %}Armas - MonsterHunterWiki{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+    <a href="/">Inicio</a> » 
+    <a href="/weapons">Armas</a> » 
+    <span id="categoryName">Cargando...</span>
+</div>
+
+<div class="article-header">
+    <h1 id="pageTitle">Cargando categoría...</h1>
+    <p class="article-intro" id="categoryDescription">
+        Cargando descripción...
+    </p>
+</div>
+
+<div class="article-section">
+    <h2>Lista de Armas</h2>
+    <p id="weaponCount">Cargando armas...</p>
+    
+    <table class="weapons-table" id="weaponsTable">
+        <thead>
+            <tr>
+                <th width="50">#</th>
+                <th width="80">Icono</th>
+                <th>Nombre</th>
+                <th>Descripción</th>
+            </tr>
+        </thead>
+        <tbody id="weaponsTableBody">
+            <tr>
+                <td colspan="4" style="text-align: center; padding: 40px;">
+                    <div class="loading">Cargando lista de armas...</div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<style>
+.breadcrumb {
+    margin-bottom: 20px;
+    padding: 10px 0;
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.breadcrumb a {
+    color: var(--primary-orange);
+    text-decoration: none;
+}
+
+.breadcrumb a:hover {
+    text-decoration: underline;
+}
+
+.breadcrumb span {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.article-header {
+    margin-bottom: 30px;
+}
+
+.article-header h1 {
+    color: var(--text-primary);
+    font-size: 32px;
+    margin-bottom: 15px;
+    border-bottom: 3px solid var(--primary-orange);
+    padding-bottom: 10px;
+}
+
+.article-intro {
+    line-height: 1.8;
+    color: var(--text-primary);
+    margin-bottom: 20px;
+}
+
+.article-section {
+    margin-bottom: 40px;
+}
+
+.article-section h2 {
+    color: var(--text-primary);
+    font-size: 24px;
+    margin-bottom: 15px;
+    background: var(--bg-secondary);
+    padding: 10px 15px;
+    border-left: 5px solid var(--primary-orange);
+}
+
+#weaponCount {
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+}
+
+/* Tabla de armas estilo WikiDex */
+.weapons-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--bg-secondary);
+    box-shadow: var(--shadow-sm);
+    margin-top: 20px;
+}
+
+.weapons-table thead {
+    background: var(--bg-tertiary);
+}
+
+.weapons-table th {
+    padding: 12px 15px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    font-size: 14px;
+}
+
+.weapons-table tbody tr {
+    border-bottom: 1px solid var(--border-color);
+    transition: background 0.2s;
+}
+
+.weapons-table tbody tr:nth-child(even) {
+    background: var(--bg-tertiary);
+}
+
+.weapons-table tbody tr:hover {
+    background: rgba(192, 130, 26, 0.1);
+    cursor: pointer;
+}
+
+.weapons-table td {
+    padding: 10px 15px;
+    border: 1px solid var(--border-color);
+    vertical-align: middle;
+}
+
+.weapon-number {
+    font-weight: bold;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+.weapon-icon {
+    text-align: center;
+}
+
+.weapon-icon-placeholder {
+    width: 60px;
+    height: 60px;
+    background: var(--gradient-orange);
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    box-shadow: var(--shadow-sm);
+}
+
+.weapon-name {
+    font-weight: 600;
+    color: var(--primary-orange);
+    font-size: 15px;
+    cursor: pointer;
+}
+
+.weapon-name:hover {
+    text-decoration: underline;
+}
+
+.weapon-description {
+    color: var(--text-secondary);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.loading {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-muted);
+    font-size: 16px;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .weapons-table {
+        font-size: 12px;
+    }
+    
+    .weapons-table th,
+    .weapons-table td {
+        padding: 8px;
+    }
+    
+    .weapon-icon-placeholder {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+    }
+}
+</style>
+
+<script>
+const categoryId = {{ category_id }};
+
+// Iconos para cada tipo de arma
+const weaponIcons = {
+    'Great Sword': '⚔️',
+    'Long Sword': '🗡️',
+    'Sword and Shield': '🛡️',
+    'Dual Blades': '⚔️',
+    'Hammer': '🔨',
+    'Hunting Horn': '🎺',
+    'Lance': '🔱',
+    'Gunlance': '💥',
+    'Switch Axe': '🪓',
+    'Charge Blade': '⚡',
+    'Insect Glaive': '🦗',
+    'Bow': '🏹',
+    'Light Bowgun': '🔫',
+    'Heavy Bowgun': '💣'
+};
+
+let currentCategory = null;
+
+// Cargar categoría
+async function loadCategory() {
+    try {
+        const response = await fetch(`/api/categories/${categoryId}`);
+        const category = await response.json();
+        currentCategory = category;
+        
+        // Actualizar breadcrumb y título
+        document.getElementById('categoryName').textContent = category.name;
+        document.getElementById('pageTitle').textContent = category.name;
+        document.getElementById('categoryDescription').textContent = 
+            category.description || `Armas de tipo ${category.name}`;
+        
+        // Actualizar título de la página
+        document.title = `${category.name} - MonsterHunterWiki`;
+        
+    } catch (error) {
+        console.error('Error cargando categoría:', error);
+        document.getElementById('categoryName').textContent = 'Error';
+        document.getElementById('pageTitle').textContent = 'Error al cargar categoría';
+    }
+}
+
+// Cargar armas de la categoría
+async function loadWeapons() {
+    try {
+        const response = await fetch(`/api/categories/${categoryId}/weapons`);
+        const data = await response.json();
+        
+        // El API devuelve {category: {...}, weapons: [...]}
+        const weapons = data.weapons || data;
+        
+        displayWeapons(weapons);
+        
+    } catch (error) {
+        console.error('Error cargando armas:', error);
+        document.getElementById('weaponsTableBody').innerHTML = 
+            '<tr><td colspan="4" style="text-align: center; padding: 40px;"><div class="empty-state"><h3>Error cargando armas</h3></div></td></tr>';
+    }
+}
+
+// Mostrar armas en la tabla
+function displayWeapons(weapons) {
+    const tbody = document.getElementById('weaponsTableBody');
+    const countElement = document.getElementById('weaponCount');
+    
+    if (weapons.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 40px;"><div class="empty-state"><h3>No hay armas en esta categoría</h3><p>Aún no se han registrado armas para esta categoría</p></div></td></tr>';
+        countElement.textContent = '0 armas encontradas.';
+        return;
+    }
+    
+    // Actualizar contador
+    countElement.innerHTML = `<strong>${weapons.length}</strong> ${weapons.length === 1 ? 'arma encontrada' : 'armas encontradas'} en esta categoría.`;
+    
+    // Ordenar por ID
+    weapons.sort((a, b) => a.id - b.id);
+    
+    const icon = currentCategory ? (weaponIcons[currentCategory.name] || '⚔️') : '⚔️';
+    
+    // Generar filas de la tabla
+    tbody.innerHTML = weapons.map(weapon => {
+        return `
+            <tr onclick="goToWeapon(${weapon.id})">
+                <td class="weapon-number">${String(weapon.id).padStart(4, '0')}</td>
+                <td class="weapon-icon">
+                    <div class="weapon-icon-placeholder">${icon}</div>
+                </td>
+                <td>
+                    <span class="weapon-name">${weapon.name}</span>
+                </td>
+                <td class="weapon-description">
+                    ${weapon.description || 'Sin descripción disponible'}
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+// Ir a la página de detalle del arma
+function goToWeapon(weaponId) {
+    window.location.href = `/weapons/${weaponId}`;
+}
+
+// Cargar datos al iniciar
+loadCategory();
+loadWeapons();
+</script>
+{% endblock %}

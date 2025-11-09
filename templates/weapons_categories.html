@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+
+{% block title %}Armas de Monster Hunter - MonsterHunterWiki{% endblock %}
+
+{% block content %}
+<div class="article-header">
+    <h1>Armas de Monster Hunter</h1>
+    <p class="article-intro">
+        En <strong>Monster Hunter</strong>, las armas son la herramienta principal del cazador. 
+        Cada tipo de arma tiene su propio estilo de combate único, movimientos especiales y estrategias. 
+        Selecciona una categoría para ver todas las armas disponibles.
+    </p>
+</div>
+
+<div class="article-section">
+    <h2>Categorías de Armas</h2>
+    <p id="categoryCount">Cargando categorías...</p>
+    
+    <div class="categories-grid" id="categoriesGrid">
+        <div class="loading">Cargando categorías de armas...</div>
+    </div>
+</div>
+
+<style>
+.article-header {
+    margin-bottom: 30px;
+}
+
+.article-header h1 {
+    color: var(--text-primary);
+    font-size: 32px;
+    margin-bottom: 15px;
+    border-bottom: 3px solid var(--primary-orange);
+    padding-bottom: 10px;
+}
+
+.article-intro {
+    line-height: 1.8;
+    color: var(--text-primary);
+    margin-bottom: 20px;
+    font-size: 16px;
+}
+
+.article-section {
+    margin-bottom: 40px;
+}
+
+.article-section h2 {
+    color: var(--text-primary);
+    font-size: 24px;
+    margin-bottom: 15px;
+    background: var(--bg-secondary);
+    padding: 10px 15px;
+    border-left: 5px solid var(--primary-orange);
+}
+
+#categoryCount {
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+    font-size: 15px;
+}
+
+.categories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.category-card {
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    padding: 25px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.category-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 5px;
+    background: var(--gradient-orange);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+}
+
+.category-card:hover {
+    border-color: var(--primary-orange);
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(192, 130, 26, 0.3);
+}
+
+.category-card:hover::before {
+    transform: scaleX(1);
+}
+
+.category-icon {
+    font-size: 48px;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.category-card h3 {
+    color: var(--text-primary);
+    font-size: 22px;
+    margin-bottom: 12px;
+    text-align: center;
+}
+
+.category-card p {
+    color: var(--text-secondary);
+    font-size: 14px;
+    line-height: 1.6;
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.category-stats {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border-color);
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-value {
+    display: block;
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--primary-orange);
+}
+
+.stat-label {
+    display: block;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 5px;
+}
+
+.loading {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-muted);
+    font-size: 16px;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .categories-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<script>
+// Iconos para cada tipo de arma
+const weaponIcons = {
+    'Great Sword': '⚔️',
+    'Long Sword': '🗡️',
+    'Sword and Shield': '🛡️',
+    'Dual Blades': '⚔️',
+    'Hammer': '🔨',
+    'Hunting Horn': '🎺',
+    'Lance': '🔱',
+    'Gunlance': '💥',
+    'Switch Axe': '🪓',
+    'Charge Blade': '⚡',
+    'Insect Glaive': '🦗',
+    'Bow': '🏹',
+    'Light Bowgun': '🔫',
+    'Heavy Bowgun': '💣'
+};
+
+let weaponCounts = {};
+
+// Cargar categorías
+async function loadCategories() {
+    try {
+        const response = await fetch('/api/categories');
+        const categories = await response.json();
+        
+        if (categories.length === 0) {
+            document.getElementById('categoriesGrid').innerHTML = 
+                '<div class="empty-state"><h3>No hay categorías disponibles</h3></div>';
+            document.getElementById('categoryCount').textContent = 'No hay categorías registradas.';
+            return;
+        }
+        
+        // Cargar armas para contar
+        const weaponsResponse = await fetch('/api/weapons');
+        const weapons = await weaponsResponse.json();
+        
+        // Contar armas por categoría
+        weapons.forEach(weapon => {
+            weaponCounts[weapon.category_id] = (weaponCounts[weapon.category_id] || 0) + 1;
+        });
+        
+        // Actualizar contador
+        document.getElementById('categoryCount').innerHTML = 
+            `Hay <strong>${categories.length}</strong> ${categories.length === 1 ? 'categoría' : 'categorías'} de armas disponibles con un total de <strong>${weapons.length}</strong> armas.`;
+        
+        // Mostrar categorías
+        displayCategories(categories);
+        
+    } catch (error) {
+        console.error('Error cargando categorías:', error);
+        document.getElementById('categoriesGrid').innerHTML = 
+            '<div class="empty-state"><h3>Error cargando categorías</h3></div>';
+    }
+}
+
+// Mostrar categorías
+function displayCategories(categories) {
+    const grid = document.getElementById('categoriesGrid');
+    
+    grid.innerHTML = categories.map(category => {
+        const icon = weaponIcons[category.name] || '⚔️';
+        const count = weaponCounts[category.id] || 0;
+        
+        return `
+            <div class="category-card" onclick="goToCategory(${category.id})">
+                <div class="category-icon">${icon}</div>
+                <h3>${category.name}</h3>
+                <p>${category.description || 'Categoría de armas'}</p>
+                <div class="category-stats">
+                    <div class="stat-item">
+                        <span class="stat-value">${count}</span>
+                        <span class="stat-label">${count === 1 ? 'Arma' : 'Armas'}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Ir a la página de categoría
+function goToCategory(categoryId) {
+    window.location.href = `/weapons/category/${categoryId}`;
+}
+
+// Cargar datos al iniciar
+loadCategories();
+</script>
+{% endblock %}

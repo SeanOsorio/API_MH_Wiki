@@ -1,0 +1,28 @@
+# HISTORIAL DE PROMPTS - Monster Hunter Weapons API
+## Proyecto: Parcial 1 Web - Desarrollo Completo de API REST
+
+### PROMPT 1: Análisis inicial del proyecto
+**Solicitud:** "analiza todo el proyecto de parcial 1 web, vamos a realizar una API de base de datos que tendra armas de Monster Hunter, tanto su estructura de carpetas como las funcionalidades y el orden que le vas a dar al desarrollo"
+
+### PROMPT 2: Definición de objetivos del proyecto
+**Solicitud:** "Para comenzar con el proyecto, crearemos los archivos necesarios en cada carpeta correspondiente, donde se desarrollará el código de acuerdo con la estructura del proyecto. "
+
+### PROMPT 3: Corrección de secuencias de ID compartidas
+**Solicitud:** "El codigo esta presentando un error, está utilizando la misma ID para todos los datos, lo que provoca que tanto las categorías como las armas compartan la misma identificación."
+
+### PROMPT 4: Preparación para release con documentación
+**Solicitud:** "Quiero ahora que me ayudes con la salida de la terminal, debido a que esta mostrando datos sensibles"
+
+### PROMPT 5: Creación de rama de release
+**Solicitud:** "Da ejemplos de solicitudes GET, POST y DELETE para probar la lógica básica en Postman."
+
+### PROMPT 6: Implementación del patrón Repository
+**Solicitud:** "Ahora implementa el repositori para subirlos a GitHub"
+
+### PROMPT 7: Optimización para producción
+**Solicitud:** "borrar consultas que aparecen en la terminal y los logs"
+
+---
+**Proyecto completado:** Monster Hunter Weapons API v1.0.0
+**Autor:** SeanOsorio
+**Fecha:** 8 de Septiembre, 2025
