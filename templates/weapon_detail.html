@@ -121,6 +121,18 @@
     box-shadow: var(--shadow-lg);
 }
 
+.weapon-icon-large.has-image {
+    background: transparent;
+    border-radius: 0;
+}
+
+.weapon-detail-img {
+    width: 150px;
+    height: 150px;
+    object-fit: contain;
+    filter: drop-shadow(0 8px 20px rgba(0,0,0,0.3));
+}
+
 .weapon-header-info {
     flex: 1;
 }
@@ -342,7 +354,7 @@ async function loadWeapon() {
 
 // Mostrar información del arma
 function displayWeapon(weapon, category) {
-    const icon = weaponIcons[category.name] || '⚔️';
+    const fallbackIcon = weaponIcons[category.name] || '⚔️';
     
     // Actualizar breadcrumb
     document.getElementById('categoryLink').textContent = category.name;
@@ -352,8 +364,27 @@ function displayWeapon(weapon, category) {
     // Actualizar título de la página
     document.title = `${weapon.name} - ${category.name} - MonsterHunterWiki`;
     
-    // Actualizar header
-    document.getElementById('weaponIconLarge').textContent = icon;
+    // Actualizar header con imagen o emoji
+    const iconElement = document.getElementById('weaponIconLarge');
+    
+    // Prioridad: image_data (DB) > image_path (archivo) > category icon_data > category icon_path > emoji
+    if (weapon.has_image_data) {
+        iconElement.innerHTML = `<img src="/api/weapons/${weapon.id}/image" alt="${weapon.name}" class="weapon-detail-img" onerror="this.parentElement.textContent='${fallbackIcon}'; this.parentElement.classList.remove('has-image');">`;
+        iconElement.classList.add('has-image');
+    } else if (weapon.image_path) {
+        iconElement.innerHTML = `<img src="${weapon.image_path}" alt="${weapon.name}" class="weapon-detail-img" onerror="this.parentElement.textContent='${fallbackIcon}'; this.parentElement.classList.remove('has-image');">`;
+        iconElement.classList.add('has-image');
+    } else if (category.has_icon_data) {
+        iconElement.innerHTML = `<img src="/api/categories/${category.id}/icon" alt="${weapon.name}" class="weapon-detail-img" onerror="this.parentElement.textContent='${fallbackIcon}'; this.parentElement.classList.remove('has-image');">`;
+        iconElement.classList.add('has-image');
+    } else if (category.icon_path) {
+        iconElement.innerHTML = `<img src="${category.icon_path}" alt="${weapon.name}" class="weapon-detail-img" onerror="this.parentElement.textContent='${fallbackIcon}'; this.parentElement.classList.remove('has-image');">`;
+        iconElement.classList.add('has-image');
+    } else {
+        iconElement.textContent = fallbackIcon;
+        iconElement.classList.remove('has-image');
+    }
+    
     document.getElementById('weaponName').textContent = weapon.name;
     document.getElementById('weaponType').textContent = category.name;
     document.getElementById('weaponId').textContent = `#${String(weapon.id).padStart(4, '0')}`;

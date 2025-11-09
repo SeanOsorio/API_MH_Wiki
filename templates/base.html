@@ -5,12 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}MonsterHunterWiki{% endblock %} - La enciclopedia Monster Hunter</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     {% block extra_css %}{% endblock %}
 </head>
 <body>
+    <!-- Modal de Autenticación -->
+    {% include 'auth_modal.html' %}
+    
     <!-- Botón de toggle de tema (Monster Hunter Wilds Style) -->
     <button class="theme-toggle" id="themeToggle" aria-label="Cambiar tema"></button>
     
@@ -25,7 +29,13 @@
             </div>
             <div class="header-right">
                 <nav class="top-nav">
-                    <a href="#">español (américa)</a>
+                    <!-- Selector de idioma -->
+                    <div class="language-selector">
+                        <select id="language-selector" onchange="changeLanguage(this.value)" aria-label="Seleccionar idioma">
+                            <option value="es">🇪🇸 Español</option>
+                            <option value="en">🇬🇧 English</option>
+                        </select>
+                    </div>
                     <a href="#">no has accedido</a>
                     <a href="#">discusión</a>
                     <a href="#">contribuciones</a>
@@ -108,7 +118,9 @@
         </main>
     </div>
 
+    <script src="{{ url_for('static', filename='js/i18n.js') }}"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
     
     <!-- Script para el toggle de temas Monster Hunter Wilds -->
     <script>

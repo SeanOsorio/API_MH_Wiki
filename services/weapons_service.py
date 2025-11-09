@@ -12,6 +12,10 @@ def get_category_by_id(category_id):
     category = category_repo.get_by_id(category_id)
     return category.to_json() if category else None
 
+def get_category_object(category_id):
+    """Obtiene el objeto de categoría completo (no JSON) - para imágenes BYTEA"""
+    return category_repo.get_by_id(category_id)
+
 def create_category(data):
     if 'name' not in data or not data['name'].strip():
         raise ValueError("El campo 'name' es requerido")
@@ -39,6 +43,10 @@ def get_all_weapons():
 def get_weapon_by_id(weapon_id):
     weapon = weapon_repo.get_by_id(weapon_id)
     return weapon.to_json() if weapon else None
+
+def get_weapon_object(weapon_id):
+    """Obtiene el objeto de arma completo (no JSON) - para imágenes BYTEA"""
+    return weapon_repo.get_by_id(weapon_id)
 
 def get_weapons_by_category(category_id):
     weapons = weapon_repo.get_by_category(category_id)

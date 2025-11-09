@@ -23,10 +23,11 @@ Endpoints disponibles:
 - DELETE /weapons/{id}            -> Eliminar arma
 """
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, send_file
+from io import BytesIO
 from services.weapons_service import (
-    get_all_categories, get_category_by_id, create_category, update_category, delete_category,
-    get_all_weapons, get_weapons_by_category, get_weapon_by_id, create_weapon, update_weapon, delete_weapon
+    get_all_categories, get_category_by_id, get_category_object, create_category, update_category, delete_category,
+    get_all_weapons, get_weapons_by_category, get_weapon_by_id, get_weapon_object, create_weapon, update_weapon, delete_weapon
 )
 
 # Blueprint para agrupar todas las rutas relacionadas con armas
@@ -370,3 +371,81 @@ def delete_weapon_endpoint(weapon_id):
     if weapon:
         return jsonify({'message': 'Arma eliminada'})
     return jsonify({'error': 'Arma no encontrada'}), 404
+
+
+# =============================================================================
+# ENDPOINTS PARA IMÁGENES DESDE BASE DE DATOS (BYTEA)
+# =============================================================================
+
+@weapons_bp.route('/categories/<int:category_id>/icon', methods=['GET'])
+def get_category_icon(category_id):
+    """
+    Obtiene la imagen del icono de una categoría desde la base de datos.
+    
+    Args:
+        category_id (int): ID de la categoría
+        
+    Returns:
+        Binary: Imagen en formato PNG/JPEG
+        
+    Status Codes:
+        200: Imagen encontrada y retornada
+        404: Categoría no existe o no tiene imagen
+    """
+    category = get_category_object(category_id)
+    
+    if not category:
+        return jsonify({'error': 'Categoría no encontrada'}), 404
+    
+    if not category.icon_data:
+        return jsonify({'error': 'Esta categoría no tiene imagen almacenada'}), 404
+    
+    # Crear un objeto de archivo en memoria desde los bytes
+    image_binary = BytesIO(category.icon_data)
+    
+    # Determinar el tipo MIME (por defecto PNG)
+    mime_type = category.icon_mime_type or 'image/png'
+    
+    return send_file(
+        image_binary,
+        mimetype=mime_type,
+        as_attachment=False,
+        download_name=f'{category.name}.png'
+    )
+
+
+@weapons_bp.route('/weapons/<int:weapon_id>/image', methods=['GET'])
+def get_weapon_image(weapon_id):
+    """
+    Obtiene la imagen de un arma desde la base de datos.
+    
+    Args:
+        weapon_id (int): ID del arma
+        
+    Returns:
+        Binary: Imagen en formato PNG/JPEG
+        
+    Status Codes:
+        200: Imagen encontrada y retornada
+        404: Arma no existe o no tiene imagen
+    """
+    weapon = get_weapon_object(weapon_id)
+    
+    if not weapon:
+        return jsonify({'error': 'Arma no encontrada'}), 404
+    
+    if not weapon.image_data:
+        return jsonify({'error': 'Esta arma no tiene imagen almacenada'}), 404
+    
+    # Crear un objeto de archivo en memoria desde los bytes
+    image_binary = BytesIO(weapon.image_data)
+    
+    # Determinar el tipo MIME (por defecto PNG)
+    mime_type = weapon.image_mime_type or 'image/png'
+    
+    return send_file(
+        image_binary,
+        mimetype=mime_type,
+        as_attachment=False,
+        download_name=f'{weapon.name}.png'
+    )

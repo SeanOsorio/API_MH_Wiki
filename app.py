@@ -20,8 +20,10 @@ Licencia: MIT
 
 from flask import Flask, jsonify, render_template
 from controllers.weapons_controller import weapons_bp
+from controllers.auth_controller import auth_bp
 from config.database import init_db, get_db
 from models.weapons_model import WeaponCategory, Weapon
+from models.user_model import User
 
 # Información de versión
 __version__ = "2.0.0"
@@ -60,6 +62,13 @@ app = create_app()
 # INICIALIZACIÓN DE BASE DE DATOS
 # =============================================================================
 
+# Configurar encoding para Windows PowerShell
+import sys
+import io
+if sys.platform == 'win32':
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+
 print(f"🚀 Iniciando {__title__} v{__version__}")
 print(f"📦 Release: {RELEASE_NAME}")
 
@@ -77,6 +86,7 @@ print("✅ Base de datos inicializada")
 # Esto incluye todos los endpoints definidos en weapons_controller.py
 # Registrar las rutas de la API con el prefijo /api
 app.register_blueprint(weapons_bp, url_prefix='/api')
+app.register_blueprint(auth_bp, url_prefix='/api/auth')
 
 print("🛣️  Rutas registradas:")
 print("   • GET    /api/categories              - Listar categorías")
@@ -90,6 +100,13 @@ print("   • POST   /api/weapons                 - Crear arma")
 print("   • GET    /api/weapons/{id}            - Obtener arma")
 print("   • PUT    /api/weapons/{id}            - Actualizar arma")
 print("   • DELETE /api/weapons/{id}            - Eliminar arma")
+print("   🔐 AUTENTICACIÓN:")
+print("   • POST   /api/auth/register           - Registrar usuario")
+print("   • POST   /api/auth/login              - Iniciar sesión")
+print("   • GET    /api/auth/me                 - Perfil del usuario")
+print("   • GET    /api/auth/users              - Listar usuarios (admin)")
+print("   • POST   /api/auth/captcha            - Generar CAPTCHA")
+print("   • POST   /api/auth/source             - Ver código (admin + captcha)")
 
 # =============================================================================
 # ENDPOINTS ADICIONALES
@@ -182,6 +199,11 @@ def health_check():
         'database': 'connected',
         'api_version': '1.0.0'
     })
+
+@app.route('/test-auth')
+def test_auth_page():
+    """Página de prueba del sistema de autenticación."""
+    return render_template('test_auth.html')
 
 # =============================================================================
 # MANEJO GLOBAL DE ERRORES

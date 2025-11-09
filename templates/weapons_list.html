@@ -149,6 +149,13 @@
     text-align: center;
 }
 
+.weapon-icon-img {
+    width: 50px;
+    height: 50px;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+}
+
 .weapon-icon-placeholder {
     width: 60px;
     height: 60px;
@@ -291,15 +298,38 @@ function displayWeapons(weapons) {
     // Ordenar por ID
     weapons.sort((a, b) => a.id - b.id);
     
-    const icon = currentCategory ? (weaponIcons[currentCategory.name] || '⚔️') : '⚔️';
+    // Usar icono de categoría o emoji de fallback
+    const categoryIcon = currentCategory?.icon_path 
+        ? currentCategory.icon_path
+        : null;
+    const fallbackIcon = currentCategory ? (weaponIcons[currentCategory.name] || '⚔️') : '⚔️';
     
     // Generar filas de la tabla
     tbody.innerHTML = weapons.map(weapon => {
+        // Prioridad: image_data (DB) > image_path (archivo) > categoryIcon > emoji
+        let iconHtml;
+        if (weapon.has_image_data) {
+            // Imagen del arma desde base de datos
+            iconHtml = `<img src="/api/weapons/${weapon.id}/image" alt="${weapon.name}" class="weapon-icon-img" onerror="this.parentElement.innerHTML='<div class=\\'weapon-icon-placeholder\\'>${fallbackIcon}</div>';">`;
+        } else if (weapon.image_path) {
+            // Imagen del arma desde archivo estático
+            iconHtml = `<img src="${weapon.image_path}" alt="${weapon.name}" class="weapon-icon-img" onerror="this.parentElement.innerHTML='<div class=\\'weapon-icon-placeholder\\'>${fallbackIcon}</div>';">`;
+        } else if (currentCategory?.has_icon_data) {
+            // Icono de categoría desde base de datos
+            iconHtml = `<img src="/api/categories/${currentCategory.id}/icon" alt="${weapon.name}" class="weapon-icon-img" onerror="this.parentElement.innerHTML='<div class=\\'weapon-icon-placeholder\\'>${fallbackIcon}</div>';">`;
+        } else if (categoryIcon) {
+            // Icono de categoría desde archivo estático
+            iconHtml = `<img src="${categoryIcon}" alt="${weapon.name}" class="weapon-icon-img" onerror="this.parentElement.innerHTML='<div class=\\'weapon-icon-placeholder\\'>${fallbackIcon}</div>';">`;
+        } else {
+            // Emoji de fallback
+            iconHtml = `<div class="weapon-icon-placeholder">${fallbackIcon}</div>`;
+        }
+        
         return `
             <tr onclick="goToWeapon(${weapon.id})">
                 <td class="weapon-number">${String(weapon.id).padStart(4, '0')}</td>
                 <td class="weapon-icon">
-                    <div class="weapon-icon-placeholder">${icon}</div>
+                    ${iconHtml}
                 </td>
                 <td>
                     <span class="weapon-name">${weapon.name}</span>
