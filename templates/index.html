@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="welcome-banner">
+    <h1 data-i18n="welcome">Bienvenido a MonsterHunterWiki</h1>
+    <p class="subtitle" data-i18n="subtitle">La enciclopedia Monster Hunter en español</p>
+    <p class="independent" data-i18n="independent">Independiente y sin anuncios</p>
+</div>
+
+<div class="intro-section">
+    <div class="intro-text">
+        <p data-i18n="intro_text_1" data-i18n-html>
+            <strong>MonsterHunterWiki</strong> es la mayor enciclopedia 
+            <strong>Monster Hunter</strong> en español, con 
+            <strong id="articleCount">...</strong> artículos, que abarca toda la información oficial 
+            de los <a href="#">videojuegos</a>, <a href="#">anime</a>, <a href="#">manga</a> 
+            y <a href="#">Juego de Cartas Coleccionables</a>.
+        </p>
+        <p data-i18n="intro_text_2" data-i18n-html>
+            Tú también puedes <a href="#">colaborar con nosotros</a> corrigiendo o ampliando el contenido. 
+            Para información básica sobre cómo editar un wiki, puedes consultar nuestras páginas de 
+            <a href="#">ayuda</a>. Si tienes cualquier duda o alguna propuesta interesante que quieras 
+            anunciar a los demás usuarios utiliza el <a href="#">foro</a>.
+        </p>
+        <p data-i18n="intro_text_3" data-i18n-html>
+            Puedes comunicarte con otros usuarios en tiempo real a través de nuestro servidor de Discord 
+            pulsando en este logo: 
+            <a href="#" class="inline-discord">
+                <img src="https://img.icons8.com/color/48/discord-logo.png" alt="Discord" width="20">
+                Discord
+            </a>.
+        </p>
+        <p data-i18n="intro_text_4" data-i18n-html>
+            Síguenos en nuestras cuentas de 
+            <a href="#">Mastodon</a>, <a href="#">X</a>, <a href="#">Instagram</a> y <a href="#">MeWe</a>. 
+            También puedes usar nuestra <a href="#">aplicación para Android</a>.
+        </p>
+    </div>
+    <div class="intro-logo">
+        <img src="{{ url_for('static', filename='images/mh-logo.png') }}" 
+             alt="Monster Hunter Wiki" 
+             onerror="this.style.display='none'">
+    </div>
+</div>
+
+<div class="news-section">
+    <h2 data-i18n="news">Noticias</h2>
+    <ul class="news-list" id="newsList">
+        <li>
+            <strong>Monster Hunter Wilds</strong> se lanzará en 2025 
+            <span class="date">(16/10/2025)</span>
+        </li>
+        <li>
+            Durante el <a href="#">Nintendo Direct</a> de 2025 se anuncia lo siguiente 
+            <span class="date">(12/09/2025)</span>:
+            <ul>
+                <li>Anuncio de <strong>Monster Hunter Stories 3</strong>.</li>
+                <li>Se revelan nuevos monstruos: <strong>Astalos</strong>, <strong>Lagiacrus</strong> y <strong>Zinogre</strong>.</li>
+                <li>
+                    Se anuncia contenido descargable (DLC) de pago <strong>Sunbreak Master</strong>, 
+                    protagonizado por <strong>Valstrax</strong>, y que añade dos nuevas megaevoluciones: 
+                    <strong>Apex-Rathalos</strong> y <strong>Apex-Diablos</strong>.
+                </li>
+            </ul>
+        </li>
+    </ul>
+</div>
+
+<div class="quick-links">
+    <div class="link-box">
+        <h3>
+            <a href="/weapons"><span data-i18n="weapons">Armas</span></a>
+        </h3>
+    </div>
+    <div class="link-box">
+        <h3>
+            <a href="/monsters"><span data-i18n="monsters">Monstruos</span></a>
+        </h3>
+    </div>
+    <div class="link-box">
+        <h3>
+            <a href="/armor"><span data-i18n="armor">Armaduras</span></a>
+        </h3>
+    </div>
+    <div class="link-box">
+        <h3>
+            <a href="/items"><span data-i18n="wiki">MonsterHunterWiki</span></a>
+        </h3>
+    </div>
+</div>
+
+<script>
+    // Cargar estadísticas de la API
+    fetch('/api/stats')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('articleCount').textContent = data.total_articles || '1,000+';
+        })
+        .catch(() => {
+            document.getElementById('articleCount').textContent = '1,000+';
+        });
+</script>
+{% endblock %}

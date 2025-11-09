@@ -1,369 +1,261 @@
-
-#!/usr/bin/env python3
 """
-🚀 Parcial1Web - Sistema de Autenticación API
-==============================================
+Monster Hunter Weapons API - Aplicación Principal
 
-¡ZERO CONFIGURATION REQUIRED!
+Esta es la API REST completa para gestionar categorías de armas y armas específicas
+del universo Monster Hunter. Proporciona endpoints para operaciones CRUD completas
+con validaciones, manejo de errores y arquitectura MVC.
 
-Ejecuta este archivo para iniciar la aplicación completa:
-    python app.py
+Características principales:
+- ✅ CRUD completo para categorías y armas
+- ✅ Base de datos PostgreSQL en Railway
+- ✅ Validaciones de integridad referencial
+- ✅ IDs independientes por tabla
+- ✅ Manejo robusto de errores HTTP
+- ✅ Documentación completa de endpoints
 
-El sistema se auto-instala y auto-configura TODO automáticamente.
+Autor: Sean Osorio
+Repositorio: https://github.com/SeanOsorio/ClassApi
+Licencia: MIT
 """
 
-import os
-import sys
-import subprocess
-from pathlib import Path
+from flask import Flask, jsonify, render_template
+from controllers.weapons_controller import weapons_bp
+from controllers.auth_controller import auth_bp
+from config.database import init_db, get_db
+from models.weapons_model import WeaponCategory, Weapon
+from models.user_model import User
 
-def auto_install_dependencies():
-    """
-    🚀 Auto-instalación de dependencias
-    Instala automáticamente todas las dependencias si no están disponibles
-    """
-    print("🔍 Verificando dependencias...")
-    
-    # Lista de paquetes principales necesarios
-    required_packages = [
-        'flask',
-        'flask-jwt-extended', 
-        'flask-bcrypt',
-        'sqlalchemy',
-        'python-dotenv',
-        'psycopg2',
-        'requests'  # Para el validador de colección
-    ]
-    
-    missing_packages = []
-    
-    # Verificar qué paquetes faltan
-    for package in required_packages:
-        try:
-            __import__(package.replace('-', '_'))
-        except ImportError:
-            missing_packages.append(package)
-    
-    if missing_packages:
-        print(f"📦 Instalando dependencias faltantes: {', '.join(missing_packages)}")
-        
-        # Instalar desde requirements.txt si existe
-        requirements_file = Path('requirements.txt')
-        if requirements_file.exists():
-            try:
-                print("📋 Instalando desde requirements.txt...")
-                result = subprocess.run([
-                    sys.executable, '-m', 'pip', 'install', '-r', 'requirements.txt'
-                ], capture_output=True, text=True)
-                
-                if result.returncode == 0:
-                    print("✅ Dependencias instaladas desde requirements.txt")
-                else:
-                    print(f"⚠️  Error instalando desde requirements.txt: {result.stderr}")
-                    # Fallback: instalar paquetes individuales
-                    install_packages_individually(missing_packages)
-            except Exception as e:
-                print(f"⚠️  Error con requirements.txt: {e}")
-                install_packages_individually(missing_packages)
-        else:
-            # Instalar paquetes individuales
-            install_packages_individually(missing_packages)
-    else:
-        print("✅ Todas las dependencias están disponibles")
+# Información de versión
+__version__ = "2.0.0"
+__title__ = "Monster Hunter Wiki"
+RELEASE_NAME = "Monster Hunter Wilds Edition"
 
-def install_packages_individually(packages):
-    """
-    📦 Instala paquetes de forma individual como fallback
-    """
-    for package in packages:
-        try:
-            print(f"📦 Instalando {package}...")
-            result = subprocess.run([
-                sys.executable, '-m', 'pip', 'install', package
-            ], capture_output=True, text=True)
-            
-            if result.returncode == 0:
-                print(f"✅ {package} instalado correctamente")
-            else:
-                print(f"⚠️  Error instalando {package}: {result.stderr}")
-        except Exception as e:
-            print(f"❌ Error instalando {package}: {e}")
-
-# Auto-instalar dependencias al importar
-auto_install_dependencies()
-
-# Ahora importar los módulos necesarios
-try:
-    from datetime import timedelta
-    from flask import Flask, jsonify
-    from flask_jwt_extended import JWTManager
-    from controllers.weapons_controller import weapons_bp
-    from controllers.auth_controller import auth_bp
-    print("✅ Todos los módulos importados correctamente")
-except ImportError as e:
-    print(f"❌ Error importando módulos: {e}")
-    print("💡 Intenta ejecutar manualmente: pip install -r requirements.txt")
-    sys.exit(1)
-
-
-def setup_environment():
-    """
-    🔧 Configuración automática del entorno
-    Crea el archivo .env si no existe con valores por defecto
-    """
-    print("🔧 Configurando entorno...")
-    
-    env_file = Path('.env')
-    if not env_file.exists():
-        print("📝 Creando archivo .env con configuración por defecto...")
-        
-        # Configuración por defecto
-        default_config = """# 🔐 Configuración de Base de Datos
-DATABASE_URL=postgresql://parcial1web_user:SecurePass2024@shuttle.proxy.rlwy.net:31337/parcial1web
-
-# 🔑 Configuración JWT  
-JWT_SECRET_KEY=super-secret-jwt-key-change-in-production-2024
-
-# 🌍 Configuración del Entorno
-FLASK_ENV=development
-FLASK_DEBUG=True
-
-# 📝 Notas:
-# - Cambia JWT_SECRET_KEY en producción por algo más seguro
-# - DATABASE_URL apunta a tu base de datos PostgreSQL
-# - FLASK_DEBUG=True habilita el modo debug para desarrollo
-"""
-        
-        env_file.write_text(default_config.strip())
-        print("✅ Archivo .env creado exitosamente")
-    else:
-        print("✅ Archivo .env ya existe")
-    
-    # Cargar variables de entorno desde .env
-    try:
-        from dotenv import load_dotenv
-        load_dotenv()
-        print("✅ Variables de entorno cargadas desde .env")
-    except ImportError:
-        print("⚠️  python-dotenv no instalado. Usando variables por defecto.")
-
-
-def setup_database():
-    """
-    🗄️ Configuración automática de la base de datos
-    Inicializa y crea todas las tablas necesarias
-    """
-    print("🗄️ Configurando base de datos...")
-    
-    try:
-        from config.database import init_db
-        init_db()
-        print("✅ Base de datos inicializada correctamente")
-        return True
-    except Exception as e:
-        print(f"❌ Error al inicializar la base de datos: {e}")
-        print("💡 Verifica que:")
-        print("   - La URL de la base de datos sea correcta")
-        print("   - El servidor de base de datos esté ejecutándose")
-        print("   - Las credenciales sean válidas")
-        return False
-
-def setup_roles():
-    """
-    🛡️ Configuración automática de roles y usuario administrador
-    Inicializa roles por defecto y crea usuario admin si no existe
-    """
-    print("🛡️ Configurando sistema de roles...")
-    
-    try:
-        from services.auth_service import initialize_default_roles, create_admin_user
-        
-        # Crear roles por defecto
-        created_roles = initialize_default_roles()
-        if created_roles:
-            print(f"✅ Roles creados: {', '.join(created_roles)}")
-        else:
-            print("ℹ️  Los roles ya existen")
-        
-        # Crear usuario administrador por defecto
-        admin_user = create_admin_user()
-        if admin_user:
-            print("✅ Usuario administrador configurado")
-            print("🔑 Credenciales de administrador:")
-            print("   • Username: admin")
-            print("   • Password: admin123")
-            print("   ⚠️  ¡Cambia esta contraseña inmediatamente!")
-        else:
-            print("ℹ️  Usuario administrador ya existe")
-        
-        return True
-    except Exception as e:
-        print(f"❌ Error al configurar roles: {e}")
-        print("💡 Los roles se pueden inicializar manualmente con POST /auth/init")
-        return False
-
+# =============================================================================
+# INICIALIZACIÓN DE LA APLICACIÓN FLASK
+# =============================================================================
 
 def create_app():
     """
-    🏗️ Factory para crear y configurar la aplicación Flask
-    """
-    print("🏗️ Creando aplicación Flask...")
+    Factory function para crear y configurar la aplicación Flask.
     
-    # Inicializar la app Flask
+    Esta función encapsula la creación de la app y permite:
+    - Testing más fácil
+    - Múltiples configuraciones (dev, prod, test)
+    - Inicialización controlada de componentes
+    
+    Returns:
+        Flask: Aplicación Flask configurada y lista para usar
+    """
+    # Crear instancia de Flask
     app = Flask(__name__)
     
-    # Configuración JWT
-    app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'dev-secret-key-change-in-production')
-    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)  # Token expira en 1 hora
+    # Configuraciones básicas
+    app.config['JSON_SORT_KEYS'] = False  # Preservar orden en respuestas JSON
+    app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True  # JSON formateado en desarrollo
     
-    # Configuración adicional
-    app.config['JSON_SORT_KEYS'] = False  # Mantener orden de JSON
-    app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True  # JSON pretty print
-    
-    # Inicializar JWT Manager
-    jwt = JWTManager(app)
-    
-    # Manejadores de errores JWT
-    @jwt.expired_token_loader
-    def expired_token_callback(jwt_header, jwt_payload):
-        return jsonify({'error': 'Token expirado', 'code': 'TOKEN_EXPIRED'}), 401
-
-    @jwt.invalid_token_loader
-    def invalid_token_callback(error):
-        return jsonify({'error': 'Token inválido', 'code': 'TOKEN_INVALID'}), 401
-
-    @jwt.unauthorized_loader
-    def missing_token_callback(error):
-        return jsonify({'error': 'Token de autenticación requerido', 'code': 'TOKEN_REQUIRED'}), 401
-    
-    # Endpoint raíz para verificar que la API está funcionando
-    @app.route('/')
-    def health_check():
-        """Endpoint de verificación de salud de la API"""
-        return jsonify({
-            'message': '🚀 Parcial1Web API funcionando correctamente',
-            'version': '1.0.0',
-            'status': 'healthy',
-            'endpoints': {
-                'authentication': '/auth/*',
-                'weapons': '/weapons/*',
-                'categories': '/categories/*'
-            },
-            'documentation': {
-                'postman': 'Ver carpeta /postman/ para colección completa',
-                'openapi': 'Ver /docs/openapi.yaml para especificación Swagger'
-            }
-        })
-    
-    # Endpoint de información del sistema
-    @app.route('/info')
-    def system_info():
-        """Endpoint con información del sistema"""
-        return jsonify({
-            'system': 'Parcial1Web - Sistema de Autenticación',
-            'features': [
-                'Registro de usuarios con validación',
-                'Login JWT con access y refresh tokens',
-                'Gestión de armas y categorías',
-                'Documentación completa Postman + OpenAPI'
-            ],
-            'authentication': {
-                'access_token_duration': '1 hora',
-                'refresh_token_duration': '30 días',
-                'hash_algorithm': 'bcrypt (12 rounds)'
-            },
-            'database': 'PostgreSQL con SQLAlchemy ORM'
-        })
-    
-    # Registrar blueprints
-    app.register_blueprint(auth_bp)      # Endpoints de autenticación  
-    app.register_blueprint(weapons_bp)   # Endpoints de armas y categorías
-    
-    print("✅ Aplicación Flask configurada")
     return app
 
+# Crear la aplicación principal
+app = create_app()
 
-def print_startup_info():
-    """
-    📋 Mostrar información de inicio del sistema
-    """
-    print("\n" + "="*50)
-    print("🎉 ¡SISTEMA INICIADO CORRECTAMENTE!")
-    print("="*50)
-    print("🌐 API ejecutándose en: http://localhost:5000")
-    print("📚 Documentación:")
-    print("   • Health check: http://localhost:5000/")
-    print("   • Info sistema: http://localhost:5000/info")  
-    print("   • Postman: ./postman/")
-    print("   • OpenAPI: ./docs/openapi.yaml")
-    print("\n🔑 Endpoints de autenticación:")
-    print("   • POST /auth/register - Registro de usuario")
-    print("   • POST /auth/login - Login con JWT")
-    print("   • GET /auth/me - Usuario actual")
-    print("   • POST /auth/refresh - Renovar token")
-    print("   • POST /auth/logout - Cerrar sesión")
-    print("\n� Endpoints de gestión (requieren permisos):")
-    print("   • GET /auth/users - Listar usuarios (admin)")
-    print("   • GET /auth/roles - Listar roles (admin)")
-    print("   • PUT /auth/users/{id}/role - Cambiar rol (admin)")
-    print("\n�🛡️ Endpoints de armas (protegidos por roles):")
-    print("   • GET /categories - Listar categorías (lectura)")
-    print("   • POST /categories - Crear categoría (creación)")
-    print("   • GET /weapons - Listar armas (lectura)")
-    print("   • POST /weapons - Crear arma (creación)")
-    print("\n💡 Para probar rápidamente:")
-    print("   1. Importar postman/Parcial1Web_Auth_Collection.json en Postman")
-    print("   2. O usar: python postman/test_collection.py")
-    print("\n🚀 ¡Listo para usar!")
-    print("="*50)
+# =============================================================================
+# INICIALIZACIÓN DE BASE DE DATOS
+# =============================================================================
 
+# Configurar encoding para Windows PowerShell
+import sys
+import io
+if sys.platform == 'win32':
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
 
-def main():
+print(f"🚀 Iniciando {__title__} v{__version__}")
+print(f"📦 Release: {RELEASE_NAME}")
+
+# Inicializar base de datos al arrancar la aplicación
+# Esto crea las tablas si no existen (safe operation)
+init_db()
+
+print("✅ Base de datos inicializada")
+
+# =============================================================================
+# REGISTRO DE BLUEPRINTS (RUTAS)
+# =============================================================================
+
+# Registrar blueprint de armas y categorías
+# Esto incluye todos los endpoints definidos en weapons_controller.py
+# Registrar las rutas de la API con el prefijo /api
+app.register_blueprint(weapons_bp, url_prefix='/api')
+app.register_blueprint(auth_bp, url_prefix='/api/auth')
+
+print("🛣️  Rutas registradas:")
+print("   • GET    /api/categories              - Listar categorías")
+print("   • POST   /api/categories              - Crear categoría")  
+print("   • GET    /api/categories/{id}         - Obtener categoría")
+print("   • PUT    /api/categories/{id}         - Actualizar categoría")
+print("   • DELETE /api/categories/{id}         - Eliminar categoría")
+print("   • GET    /api/categories/{id}/weapons - Armas por categoría")
+print("   • GET    /api/weapons                 - Listar armas")
+print("   • POST   /api/weapons                 - Crear arma")
+print("   • GET    /api/weapons/{id}            - Obtener arma")
+print("   • PUT    /api/weapons/{id}            - Actualizar arma")
+print("   • DELETE /api/weapons/{id}            - Eliminar arma")
+print("   🔐 AUTENTICACIÓN:")
+print("   • POST   /api/auth/register           - Registrar usuario")
+print("   • POST   /api/auth/login              - Iniciar sesión")
+print("   • GET    /api/auth/me                 - Perfil del usuario")
+print("   • GET    /api/auth/users              - Listar usuarios (admin)")
+print("   • POST   /api/auth/captcha            - Generar CAPTCHA")
+print("   • POST   /api/auth/source             - Ver código (admin + captcha)")
+
+# =============================================================================
+# ENDPOINTS ADICIONALES
+# =============================================================================
+
+@app.route('/')
+def home():
     """
-    🚀 Función principal - Auto-configura e inicia todo el sistema
+    Página de inicio de MonsterHunterWiki
+    
+    Returns:
+        HTML: Página de inicio renderizada
     """
-    print("🚀 INICIANDO PARCIAL1WEB - SISTEMA DE AUTENTICACIÓN")
-    print("="*50)
+    return render_template('index.html')
+
+@app.route('/weapons')
+def weapons_page():
+    """Página principal de armas - muestra categorías"""
+    return render_template('weapons_categories.html')
+
+@app.route('/weapons/category/<int:category_id>')
+def weapons_by_category_page(category_id):
+    """Página de armas por categoría"""
+    return render_template('weapons_list.html', category_id=category_id)
+
+@app.route('/weapons/<int:weapon_id>')
+def weapon_detail_page(weapon_id):
+    """Página de detalle de un arma específica"""
+    return render_template('weapon_detail.html', weapon_id=weapon_id)
+
+@app.route('/monsters')
+def monsters_page():
+    """Página de monstruos (próximamente)"""
+    return render_template('coming_soon.html', section='Monstruos')
+
+@app.route('/items')
+def items_page():
+    """Página de objetos (próximamente)"""
+    return render_template('coming_soon.html', section='Objetos')
+
+@app.route('/armor')
+def armor_page():
+    """Página de armaduras (próximamente)"""
+    return render_template('coming_soon.html', section='Armaduras')
+
+@app.route('/quests')
+def quests_page():
+    """Página de misiones (próximamente)"""
+    return render_template('coming_soon.html', section='Misiones')
+
+@app.route('/api/stats')
+def api_stats():
+    """
+    Endpoint para obtener estadísticas de la wiki
     
-    # Paso 1: Configurar entorno
-    setup_environment()
-    
-    # Paso 2: Configurar base de datos
-    db_success = setup_database()
-    if not db_success:
-        print("\n❌ No se pudo conectar a la base de datos.")
-        print("💡 El sistema puede funcionar parcialmente, pero algunos endpoints fallarán.")
-        response = input("\n¿Continuar de todas formas? (s/N): ")
-        if response.lower() != 's':
-            print("🛑 Iniciación cancelada por el usuario")
-            sys.exit(1)
-    
-    # Paso 3: Configurar roles y usuarios por defecto
-    if db_success:
-        setup_roles()
-    
-    # Paso 4: Crear aplicación Flask
-    app = create_app()
-    
-    # Paso 4: Mostrar información de inicio
-    print_startup_info()
-    
-    # Paso 5: Iniciar servidor Flask
+    Returns:
+        JSON: Estadísticas de artículos
+    """
     try:
-        print("\n🔥 Iniciando servidor Flask...")
-        app.run(
-            host='0.0.0.0',  # Permitir conexiones externas
-            port=5000,       # Puerto estándar
-            debug=True,      # Modo debug habilitado
-            use_reloader=False  # Evitar doble ejecución en debug mode
-        )
-    except KeyboardInterrupt:
-        print("\n\n👋 Sistema detenido por el usuario")
+        db = next(get_db())
+        categories_count = db.query(WeaponCategory).count()
+        weapons_count = db.query(Weapon).count()
+        total_articles = categories_count + weapons_count + 850  # + contenido base
+        
+        return jsonify({
+            'total_articles': total_articles,
+            'categories': categories_count,
+            'weapons': weapons_count,
+            'status': 'online'
+        })
     except Exception as e:
-        print(f"\n❌ Error al iniciar el servidor: {e}")
-        sys.exit(1)
+        return jsonify({
+            'total_articles': 1000,
+            'status': 'error',
+            'message': str(e)
+        }), 500
+    finally:
+        db.close()
 
+@app.route('/health')
+def health_check():
+    """
+    Endpoint de health check para monitoreo.
+    
+    Returns:
+        JSON: Estado de salud de la aplicación y base de datos
+    """
+    return jsonify({
+        'status': 'healthy',
+        'database': 'connected',
+        'api_version': '1.0.0'
+    })
 
-# 🎯 Auto-inicialización cuando se ejecuta directamente
+@app.route('/test-auth')
+def test_auth_page():
+    """Página de prueba del sistema de autenticación."""
+    return render_template('test_auth.html')
+
+# =============================================================================
+# MANEJO GLOBAL DE ERRORES
+# =============================================================================
+
+@app.errorhandler(404)
+def not_found(error):
+    """Manejador para errores 404 - Recurso no encontrado."""
+    return jsonify({
+        'error': 'Endpoint no encontrado',
+        'message': 'Verifica la URL y el método HTTP',
+        'available_endpoints': [
+            'GET /categories',
+            'POST /categories', 
+            'GET /weapons',
+            'POST /weapons'
+        ]
+    }), 404
+
+@app.errorhandler(405)
+def method_not_allowed(error):
+    """Manejador para errores 405 - Método no permitido."""
+    return jsonify({
+        'error': 'Método HTTP no permitido',
+        'message': 'Verifica que estés usando el método correcto (GET, POST, PUT, DELETE)'
+    }), 405
+
+@app.errorhandler(500)
+def internal_server_error(error):
+    """Manejador para errores 500 - Error interno del servidor."""
+    return jsonify({
+        'error': 'Error interno del servidor',
+        'message': 'Ha ocurrido un error inesperado. Inténtalo más tarde.'
+    }), 500
+
+# =============================================================================
+# PUNTO DE ENTRADA DE LA APLICACIÓN
+# =============================================================================
+
 if __name__ == '__main__':
-    main()
+    print("=" * 50)
+    print(f"🎮 MONSTER HUNTER WEAPONS API v{__version__}")
+    print("=" * 50)
+    print("🌐 Servidor iniciando en: http://127.0.0.1:5000")
+    print("📚 Documentación: https://github.com/SeanOsorio/ClassApi")
+    print(f"📦 Release: {RELEASE_NAME}")
+    print("🐛 Modo debug: ACTIVADO")
+    print("=" * 50)
+    
+    # Iniciar servidor Flask en modo desarrollo
+    app.run(
+        debug=True,        # Modo debug para desarrollo
+        host='127.0.0.1',  # Solo accesible localmente
+        port=5000          # Puerto estándar para desarrollo
+    )

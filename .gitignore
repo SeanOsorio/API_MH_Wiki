@@ -218,9 +218,21 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
-# Bases de datos locales
+#Base de datos local
 monster_hunter.db
-data/
-*.db
-*.sqlite
-*.sqlite3
+
+# Scripts de utilidades de base de datos - DELICADOS ⚠️
+# Estos scripts pueden modificar o borrar datos en producción
+scripts/setup/clear_database.py        # PELIGRO: Borra toda la BD
+scripts/setup/seed_database.py         # Puede duplicar datos
+scripts/setup/upload_real_images.py    # Puede subir imágenes incorrectas
+scripts/setup/migrate_users_table.py   # Puede recrear tabla de usuarios
+scripts/setup/create_sequences.py      # Puede alterar secuencias de IDs
+
+# Scripts de testing sensibles
+scripts/testing/test_auth.py           # Contiene credenciales de prueba
+
+# Archivos temporales y logs de scripts
+scripts/**/*.log
+scripts/**/*.tmp
+scripts/**/*.bak

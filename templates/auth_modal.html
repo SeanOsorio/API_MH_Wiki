@@ -1,0 +1,101 @@
+<!-- Modal de Autenticación -->
+<div id="authModal" class="auth-modal">
+    <div class="auth-modal-content">
+        <button class="auth-modal-close" id="closeAuthModal">&times;</button>
+        
+        <!-- Pestañas de Login/Registro -->
+        <div class="auth-tabs">
+            <button class="auth-tab active" data-tab="login">Iniciar Sesión</button>
+            <button class="auth-tab" data-tab="register">Crear Cuenta</button>
+        </div>
+        
+        <!-- Formulario de Login -->
+        <div id="loginForm" class="auth-form-container active">
+            <h2 class="auth-title">🔐 Iniciar Sesión</h2>
+            <form id="loginFormElement">
+                <div class="form-group">
+                    <label for="loginUsername">👤 Usuario o Email</label>
+                    <input type="text" id="loginUsername" name="username" required 
+                           placeholder="Ingresa tu usuario o email" autocomplete="username">
+                </div>
+                
+                <div class="form-group">
+                    <label for="loginPassword">🔑 Contraseña</label>
+                    <input type="password" id="loginPassword" name="password" required 
+                           placeholder="Ingresa tu contraseña" autocomplete="current-password">
+                </div>
+                
+                <div class="form-group">
+                    <button type="submit" class="auth-submit-btn">
+                        <span class="btn-text">Iniciar Sesión</span>
+                        <span class="btn-loading" style="display: none;">⏳ Ingresando...</span>
+                    </button>
+                </div>
+                
+                <div class="auth-message" id="loginMessage"></div>
+            </form>
+        </div>
+        
+        <!-- Formulario de Registro -->
+        <div id="registerForm" class="auth-form-container">
+            <h2 class="auth-title">📝 Crear Cuenta Nueva</h2>
+            <form id="registerFormElement">
+                <div class="form-group">
+                    <label for="registerUsername">👤 Nombre de Usuario</label>
+                    <input type="text" id="registerUsername" name="username" required 
+                           placeholder="Mínimo 3 caracteres" minlength="3" autocomplete="username">
+                    <small class="form-help">Tu nombre de usuario será visible públicamente</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="registerEmail">📧 Correo Electrónico</label>
+                    <input type="email" id="registerEmail" name="email" required 
+                           placeholder="tu@email.com" autocomplete="email">
+                    <small class="form-help">Usaremos este email para notificaciones importantes</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="registerPassword">🔑 Contraseña</label>
+                    <input type="password" id="registerPassword" name="password" required 
+                           placeholder="Mínimo 6 caracteres" minlength="6" autocomplete="new-password">
+                    <small class="form-help">Usa una contraseña segura</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="registerPasswordConfirm">🔑 Confirmar Contraseña</label>
+                    <input type="password" id="registerPasswordConfirm" name="password_confirm" required 
+                           placeholder="Repite tu contraseña" autocomplete="new-password">
+                </div>
+                
+                <div class="form-group">
+                    <button type="submit" class="auth-submit-btn">
+                        <span class="btn-text">Crear Cuenta</span>
+                        <span class="btn-loading" style="display: none;">⏳ Creando cuenta...</span>
+                    </button>
+                </div>
+                
+                <div class="auth-message" id="registerMessage"></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Panel de Usuario Autenticado - Barra inferior -->
+<div id="userPanel" class="user-panel" style="display: none;">
+    <div class="user-info">
+        <span class="user-greeting">
+            👋 Hola, <strong id="currentUsername"></strong>
+        </span>
+        <span class="user-role" id="currentUserRole"></span>
+    </div>
+    <div class="user-actions">
+        <button id="adminPanelBtn" class="user-action-btn admin-only" style="display: none;">⚙️ Panel Admin</button>
+        <button id="logoutBtn" class="user-action-btn">🚪 Cerrar Sesión</button>
+        <button id="minimizePanel" class="user-action-btn minimize-btn" title="Minimizar panel">▼</button>
+    </div>
+</div>
+
+<!-- Panel minimizado (botón flotante) -->
+<button id="userPanelMinimized" class="user-panel-minimized" style="display: none;" title="Expandir panel de usuario">
+    👤 <span id="miniUsername"></span>
+</button>

@@ -1,69 +1,78 @@
+﻿from repositories.weapon_category_repository import WeaponCategoryRepository
+from repositories.weapon_repository import WeaponRepository
 
-from config.database import get_db
-from models.weapons_model import Weapon, WeaponCategory
+category_repo = WeaponCategoryRepository()
+weapon_repo = WeaponRepository()
 
-def get_weapon_by_id(weapon_id):
-    db = next(get_db())
-    weapon = db.query(Weapon).filter(Weapon.id == weapon_id).first()
-    return weapon
-
-# CRUD para categorías de armas
 def get_all_categories():
-    db = next(get_db())
-    return db.query(WeaponCategory).all()
+    categories = category_repo.get_all()
+    return [cat.to_json() for cat in categories]
 
 def get_category_by_id(category_id):
-    db = next(get_db())
-    return db.query(WeaponCategory).filter(WeaponCategory.id == category_id).first()
+    category = category_repo.get_by_id(category_id)
+    return category.to_json() if category else None
+
+def get_category_object(category_id):
+    """Obtiene el objeto de categoría completo (no JSON) - para imágenes BYTEA"""
+    return category_repo.get_by_id(category_id)
 
 def create_category(data):
-    db = next(get_db())
-    new_category = WeaponCategory(**data)
-    db.add(new_category)
-    db.commit()
-    db.refresh(new_category)
-    return new_category
+    if 'name' not in data or not data['name'].strip():
+        raise ValueError("El campo 'name' es requerido")
+    if category_repo.exists_by_name(data['name']):
+        raise ValueError(f"Ya existe una categoría con el nombre '{data['name']}'")
+    category = category_repo.create(data)
+    return category.to_json()
 
-def update_category(category_id, new_data):
-    db = next(get_db())
-    category = db.query(WeaponCategory).filter(WeaponCategory.id == category_id).first()
-    if category:
-        for key, value in new_data.items():
-            setattr(category, key, value)
-        db.commit()
-        db.refresh(category)
-    return category
+def update_category(category_id, data):
+    if 'name' not in data or not data['name'].strip():
+        raise ValueError("El campo 'name' es requerido")
+    category = category_repo.update(category_id, data)
+    return category.to_json() if category else None
 
 def delete_category(category_id):
-    db = next(get_db())
-    category = db.query(WeaponCategory).filter(WeaponCategory.id == category_id).first()
-    if category:
-        db.delete(category)
-        db.commit()
-    return category
+    weapons_count = weapon_repo.count_by_category(category_id)
+    if weapons_count > 0:
+        raise ValueError(f"No se puede eliminar la categoría porque tiene {weapons_count} arma(s) asociada(s)")
+    return category_repo.delete(category_id)
+
+def get_all_weapons():
+    weapons = weapon_repo.get_all()
+    return [weapon.to_json() for weapon in weapons]
+
+def get_weapon_by_id(weapon_id):
+    weapon = weapon_repo.get_by_id(weapon_id)
+    return weapon.to_json() if weapon else None
+
+def get_weapon_object(weapon_id):
+    """Obtiene el objeto de arma completo (no JSON) - para imágenes BYTEA"""
+    return weapon_repo.get_by_id(weapon_id)
+
+def get_weapons_by_category(category_id):
+    weapons = weapon_repo.get_by_category(category_id)
+    return [weapon.to_json() for weapon in weapons]
 
 def create_weapon(data):
-    db = next(get_db())
-    new_weapon = Weapon(**data)
-    db.add(new_weapon)
-    db.commit()
-    db.refresh(new_weapon)
-    return new_weapon
+    if 'name' not in data or not data['name'].strip():
+        raise ValueError("El campo 'name' es requerido")
+    if 'category_id' not in data:
+        raise ValueError("El campo 'category_id' es requerido")
+    category = category_repo.get_by_id(data['category_id'])
+    if not category:
+        raise ValueError(f"La categoría con ID '{data['category_id']}' no existe")
+    weapon = weapon_repo.create(data)
+    return weapon.to_json()
 
-def update_weapon(weapon_id, new_data):
-    db = next(get_db())
-    weapon = db.query(Weapon).filter(Weapon.id == weapon_id).first()
-    if weapon:
-        for key, value in new_data.items():
-            setattr(weapon, key, value)
-        db.commit()
-        db.refresh(weapon)
-    return weapon
+def update_weapon(weapon_id, data):
+    if 'name' not in data or not data['name'].strip():
+        raise ValueError("El campo 'name' es requerido")
+    if 'category_id' not in data:
+        raise ValueError("El campo 'category_id' es requerido")
+    category = category_repo.get_by_id(data['category_id'])
+    if not category:
+        raise ValueError(f"La categoría con ID '{data['category_id']}' no existe")
+    weapon = weapon_repo.update(weapon_id, data)
+    return weapon.to_json() if weapon else None
 
 def delete_weapon(weapon_id):
-    db = next(get_db())
-    weapon = db.query(Weapon).filter(Weapon.id == weapon_id).first()
-    if weapon:
-        db.delete(weapon)
-        db.commit()
-    return weapon
+    return weapon_repo.delete(weapon_id)

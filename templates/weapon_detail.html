@@ -1,0 +1,425 @@
+{% extends "base.html" %}
+
+{% block title %}Arma - MonsterHunterWiki{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+    <a href="/">Inicio</a> » 
+    <a href="/weapons">Armas</a> » 
+    <a href="#" id="categoryLink">Categoría</a> » 
+    <span id="weaponNameBreadcrumb">Cargando...</span>
+</div>
+
+<div class="weapon-detail-container">
+    <div class="loading-detail" id="loadingState">
+        <div class="loading">Cargando información del arma...</div>
+    </div>
+    
+    <div class="weapon-detail-content" id="weaponContent" style="display: none;">
+        <div class="weapon-header">
+            <div class="weapon-icon-large" id="weaponIconLarge">⚔️</div>
+            <div class="weapon-header-info">
+                <h1 id="weaponName">Nombre del Arma</h1>
+                <div class="weapon-type-badge" id="weaponType">Tipo</div>
+                <div class="weapon-id">ID: <span id="weaponId">#0000</span></div>
+            </div>
+        </div>
+
+        <div class="weapon-sections">
+            <div class="weapon-section">
+                <h2>📝 Descripción</h2>
+                <div class="weapon-description" id="weaponDescription">
+                    Sin descripción disponible.
+                </div>
+            </div>
+
+            <div class="weapon-section">
+                <h2>🎯 Características</h2>
+                <div class="weapon-stats">
+                    <div class="stat-box">
+                        <div class="stat-label">Categoría</div>
+                        <div class="stat-value" id="weaponCategory">-</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Tipo de Arma</div>
+                        <div class="stat-value" id="weaponTypeName">-</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">ID de Arma</div>
+                        <div class="stat-value" id="weaponIdStat">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="weapon-actions">
+                <button class="btn-back" onclick="goBack()">
+                    ← Volver a la lista
+                </button>
+                <button class="btn-category" onclick="goToCategory()">
+                    Ver todas las armas de esta categoría
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="error-state" id="errorState" style="display: none;">
+        <h2>❌ Error al cargar el arma</h2>
+        <p>No se pudo encontrar el arma solicitada.</p>
+        <button class="btn-back" onclick="window.location.href='/weapons'">
+            Volver a Armas
+        </button>
+    </div>
+</div>
+
+<style>
+.breadcrumb {
+    margin-bottom: 20px;
+    padding: 10px 0;
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.breadcrumb a {
+    color: var(--primary-orange);
+    text-decoration: none;
+}
+
+.breadcrumb a:hover {
+    text-decoration: underline;
+}
+
+.breadcrumb span {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.weapon-detail-container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.weapon-header {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    background: var(--bg-secondary);
+    padding: 40px;
+    border-radius: 12px;
+    margin-bottom: 30px;
+    box-shadow: var(--shadow-md);
+}
+
+.weapon-icon-large {
+    font-size: 120px;
+    min-width: 150px;
+    height: 150px;
+    background: var(--gradient-orange);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-lg);
+}
+
+.weapon-icon-large.has-image {
+    background: transparent;
+    border-radius: 0;
+}
+
+.weapon-detail-img {
+    width: 150px;
+    height: 150px;
+    object-fit: contain;
+    filter: drop-shadow(0 8px 20px rgba(0,0,0,0.3));
+}
+
+.weapon-header-info {
+    flex: 1;
+}
+
+.weapon-header-info h1 {
+    color: var(--text-primary);
+    font-size: 36px;
+    margin-bottom: 15px;
+}
+
+.weapon-type-badge {
+    display: inline-block;
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    color: white;
+    background: var(--gradient-orange);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 10px;
+}
+
+.weapon-id {
+    color: var(--text-muted);
+    font-size: 14px;
+    margin-top: 10px;
+}
+
+.weapon-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.weapon-section {
+    background: var(--bg-secondary);
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+    border: 2px solid var(--border-color);
+}
+
+.weapon-section h2 {
+    color: var(--text-primary);
+    font-size: 22px;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--primary-orange);
+}
+
+.weapon-description {
+    color: var(--text-primary);
+    font-size: 16px;
+    line-height: 1.8;
+}
+
+.weapon-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.stat-box {
+    background: var(--bg-tertiary);
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    border: 1px solid var(--border-color);
+}
+
+.stat-label {
+    color: var(--text-muted);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+}
+
+.stat-value {
+    color: var(--primary-orange);
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.weapon-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.btn-back, .btn-category {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-back {
+    background: var(--text-secondary);
+    color: white;
+    flex: 1;
+}
+
+.btn-back:hover {
+    background: var(--text-primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-category {
+    background: var(--gradient-orange);
+    color: white;
+    flex: 2;
+}
+
+.btn-category:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.loading-detail, .error-state {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.loading {
+    color: var(--text-muted);
+    font-size: 18px;
+}
+
+.error-state h2 {
+    color: #e74c3c;
+    margin-bottom: 15px;
+}
+
+.error-state p {
+    color: var(--text-secondary);
+    margin-bottom: 25px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .weapon-header {
+        flex-direction: column;
+        text-align: center;
+        padding: 30px 20px;
+    }
+    
+    .weapon-icon-large {
+        font-size: 80px;
+        min-width: 100px;
+        height: 100px;
+    }
+    
+    .weapon-header-info h1 {
+        font-size: 28px;
+    }
+    
+    .weapon-actions {
+        flex-direction: column;
+    }
+}
+</style>
+
+<script>
+const weaponId = {{ weapon_id }};
+
+// Iconos para cada tipo de arma
+const weaponIcons = {
+    'Great Sword': '⚔️',
+    'Long Sword': '🗡️',
+    'Sword and Shield': '🛡️',
+    'Dual Blades': '⚔️',
+    'Hammer': '🔨',
+    'Hunting Horn': '🎺',
+    'Lance': '🔱',
+    'Gunlance': '💥',
+    'Switch Axe': '🪓',
+    'Charge Blade': '⚡',
+    'Insect Glaive': '🦗',
+    'Bow': '🏹',
+    'Light Bowgun': '🔫',
+    'Heavy Bowgun': '💣'
+};
+
+let currentWeapon = null;
+let currentCategory = null;
+
+// Cargar información del arma
+async function loadWeapon() {
+    try {
+        // Cargar arma
+        const weaponResponse = await fetch(`/api/weapons/${weaponId}`);
+        
+        if (!weaponResponse.ok) {
+            throw new Error('Arma no encontrada');
+        }
+        
+        const weapon = await weaponResponse.json();
+        currentWeapon = weapon;
+        
+        // Cargar categoría
+        const categoryResponse = await fetch(`/api/categories/${weapon.category_id}`);
+        const category = await categoryResponse.json();
+        currentCategory = category;
+        
+        // Mostrar información
+        displayWeapon(weapon, category);
+        
+    } catch (error) {
+        console.error('Error cargando arma:', error);
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('errorState').style.display = 'block';
+    }
+}
+
+// Mostrar información del arma
+function displayWeapon(weapon, category) {
+    const fallbackIcon = weaponIcons[category.name] || '⚔️';
+    
+    // Actualizar breadcrumb
+    document.getElementById('categoryLink').textContent = category.name;
+    document.getElementById('categoryLink').href = `/weapons/category/${category.id}`;
+    document.getElementById('weaponNameBreadcrumb').textContent = weapon.name;
+    
+    // Actualizar título de la página
+    document.title = `${weapon.name} - ${category.name} - MonsterHunterWiki`;
+    
+    // Actualizar header con imagen o emoji
+    const iconElement = document.getElementById('weaponIconLarge');
+    
+    // Prioridad: image_data (DB) > image_path (archivo) > category icon_data > category icon_path > emoji
+    if (weapon.has_image_data) {
+        iconElement.innerHTML = `<img src="/api/weapons/${weapon.id}/image" alt="${weapon.name}" class="weapon-detail-img" onerror="this.parentElement.textContent='${fallbackIcon}'; this.parentElement.classList.remove('has-image');">`;
+        iconElement.classList.add('has-image');
+    } else if (weapon.image_path) {
+        iconElement.innerHTML = `<img src="${weapon.image_path}" alt="${weapon.name}" class="weapon-detail-img" onerror="this.parentElement.textContent='${fallbackIcon}'; this.parentElement.classList.remove('has-image');">`;
+        iconElement.classList.add('has-image');
+    } else if (category.has_icon_data) {
+        iconElement.innerHTML = `<img src="/api/categories/${category.id}/icon" alt="${weapon.name}" class="weapon-detail-img" onerror="this.parentElement.textContent='${fallbackIcon}'; this.parentElement.classList.remove('has-image');">`;
+        iconElement.classList.add('has-image');
+    } else if (category.icon_path) {
+        iconElement.innerHTML = `<img src="${category.icon_path}" alt="${weapon.name}" class="weapon-detail-img" onerror="this.parentElement.textContent='${fallbackIcon}'; this.parentElement.classList.remove('has-image');">`;
+        iconElement.classList.add('has-image');
+    } else {
+        iconElement.textContent = fallbackIcon;
+        iconElement.classList.remove('has-image');
+    }
+    
+    document.getElementById('weaponName').textContent = weapon.name;
+    document.getElementById('weaponType').textContent = category.name;
+    document.getElementById('weaponId').textContent = `#${String(weapon.id).padStart(4, '0')}`;
+    
+    // Actualizar descripción
+    document.getElementById('weaponDescription').textContent = 
+        weapon.description || 'No hay descripción disponible para esta arma.';
+    
+    // Actualizar stats
+    document.getElementById('weaponCategory').textContent = category.name;
+    document.getElementById('weaponTypeName').textContent = category.name;
+    document.getElementById('weaponIdStat').textContent = `#${weapon.id}`;
+    
+    // Mostrar contenido
+    document.getElementById('loadingState').style.display = 'none';
+    document.getElementById('weaponContent').style.display = 'block';
+}
+
+// Volver atrás
+function goBack() {
+    if (currentCategory) {
+        window.location.href = `/weapons/category/${currentCategory.id}`;
+    } else {
+        window.location.href = '/weapons';
+    }
+}
+
+// Ir a la categoría
+function goToCategory() {
+    if (currentCategory) {
+        window.location.href = `/weapons/category/${currentCategory.id}`;
+    }
+}
+
+// Cargar datos al iniciar
+loadWeapon();
+</script>
+{% endblock %}
