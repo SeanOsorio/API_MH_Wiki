@@ -21,6 +21,52 @@
 
 <div class="article-section">
     <h2>Lista de Armas</h2>
+    
+    <!-- Barra de búsqueda y filtros -->
+    <div class="search-container">
+        <div class="search-box-wrapper">
+            <input type="text" 
+                   id="searchInput" 
+                   class="search-input" 
+                   placeholder="Buscar armas por nombre o descripción..." 
+                   data-i18n-placeholder="search_weapons">
+            <button class="search-btn" onclick="performSearch()">
+                🔍 <span data-i18n="btn_search">Buscar</span>
+            </button>
+            <button class="clear-btn" onclick="clearSearch()">
+                ✖ <span data-i18n="btn_clear">Limpiar</span>
+            </button>
+        </div>
+        
+        <div class="filters-wrapper">
+            <div class="filter-group">
+                <label for="categoryFilter" data-i18n="filter_category">Categoría:</label>
+                <select id="categoryFilter" onchange="performSearch()">
+                    <option value="" data-i18n="filter_all">Todas las categorías</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="minAttackFilter" data-i18n="filter_min_attack">Ataque mínimo:</label>
+                <input type="number" id="minAttackFilter" placeholder="0" min="0" onchange="performSearch()">
+            </div>
+            
+            <div class="filter-group">
+                <label for="elementFilter" data-i18n="filter_element">Elemento:</label>
+                <select id="elementFilter" onchange="performSearch()">
+                    <option value="" data-i18n="filter_all_elements">Todos los elementos</option>
+                    <option value="fire">🔥 Fire</option>
+                    <option value="water">💧 Water</option>
+                    <option value="thunder">⚡ Thunder</option>
+                    <option value="ice">❄️ Ice</option>
+                    <option value="dragon">🐉 Dragon</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="search-info" id="searchInfo"></div>
+    </div>
+    
     <p id="weaponCount">Cargando armas...</p>
     
     <table class="weapons-table" id="weaponsTable">
@@ -210,6 +256,122 @@
     color: #999;
 }
 
+/* Búsqueda y filtros */
+.search-container {
+    background: linear-gradient(to bottom, #f8f9fa 0%, #e9ecef 100%);
+    border: 2px solid #dee2e6;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 20px 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.search-box-wrapper {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.search-input {
+    flex: 1;
+    padding: 12px 20px;
+    font-size: 16px;
+    border: 2px solid #ced4da;
+    border-radius: 8px;
+    outline: none;
+    transition: all 0.3s;
+}
+
+.search-input:focus {
+    border-color: #2c5282;
+    box-shadow: 0 0 0 3px rgba(44, 82, 130, 0.1);
+}
+
+.search-btn, .clear-btn {
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.search-btn {
+    background: linear-gradient(135deg, #2c5282 0%, #1e3a5f 100%);
+    color: white;
+}
+
+.search-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(44, 82, 130, 0.3);
+}
+
+.clear-btn {
+    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+    color: white;
+}
+
+.clear-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+}
+
+.filters-wrapper {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.filter-group label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #495057;
+}
+
+.filter-group select,
+.filter-group input[type="number"] {
+    padding: 10px;
+    font-size: 15px;
+    border: 2px solid #ced4da;
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+.filter-group select:focus,
+.filter-group input[type="number"]:focus {
+    border-color: #2c5282;
+}
+
+.search-info {
+    margin-top: 15px;
+    padding: 12px;
+    background: white;
+    border-left: 4px solid #2c5282;
+    border-radius: 4px;
+    font-size: 14px;
+    color: #495057;
+    display: none;
+}
+
+.search-info.active {
+    display: block;
+}
+
+.search-info strong {
+    color: #2c5282;
+}
+
 /* Iconos de categorías */
 .category-icon {
     font-size: 20px;
@@ -231,6 +393,44 @@
         width: 40px;
         height: 40px;
         font-size: 20px;
+    }
+    
+    /* Búsqueda responsive */
+    .search-box-wrapper {
+        flex-direction: column;
+    }
+    
+    .search-btn, .clear-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .filters-wrapper {
+        grid-template-columns: 1fr;
+    }
+    
+    .article-header h1 {
+        font-size: 24px;
+    }
+    
+    .article-section h2 {
+        font-size: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .search-container {
+        padding: 15px;
+    }
+    
+    .search-input {
+        font-size: 14px;
+        padding: 10px 15px;
+    }
+    
+    .search-btn, .clear-btn {
+        padding: 10px 20px;
+        font-size: 14px;
     }
 }
 </style>
@@ -276,6 +476,15 @@ async function loadCategories() {
             const icon = weaponIcons[cat.name] || '⚔️';
             return `<li><a href="#" onclick="scrollToWeapon(1); return false;">${icon} Lista de ${cat.name}</a></li>`;
         }).join('');
+        
+        // Poblar select de categorías en filtros
+        const categoryFilter = document.getElementById('categoryFilter');
+        categories.forEach(cat => {
+            const option = document.createElement('option');
+            option.value = cat.id;
+            option.textContent = cat.name;
+            categoryFilter.appendChild(option);
+        });
         
     } catch (error) {
         console.error('Error cargando categorías:', error);
@@ -348,6 +557,97 @@ function scrollToWeapon(weaponId) {
     const table = document.getElementById('weaponsTable');
     table.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
+
+// Realizar búsqueda
+async function performSearch() {
+    const searchQuery = document.getElementById('searchInput').value.trim();
+    const category = document.getElementById('categoryFilter').value;
+    const minAttack = document.getElementById('minAttackFilter').value;
+    const element = document.getElementById('elementFilter').value;
+    
+    // Construir URL con parámetros
+    const params = new URLSearchParams();
+    if (searchQuery) params.append('q', searchQuery);
+    if (category) params.append('category', category);
+    if (minAttack) params.append('min_attack', minAttack);
+    if (element) params.append('element', element);
+    
+    const url = params.toString() ? `/api/weapons/search?${params.toString()}` : '/api/weapons';
+    
+    try {
+        // Mostrar loading
+        document.getElementById('weaponsTableBody').innerHTML = 
+            '<tr><td colspan="5" style="text-align: center; padding: 40px;"><div class="loading">🔍 Buscando armas...</div></td></tr>';
+        
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        // Si es búsqueda, extraer results
+        const weapons = data.results ? data.results : data;
+        
+        // Mostrar resultados
+        displayWeapons(weapons);
+        
+        // Mostrar información de búsqueda
+        showSearchInfo(data, searchQuery, category, minAttack, element);
+        
+    } catch (error) {
+        console.error('Error en búsqueda:', error);
+        document.getElementById('weaponsTableBody').innerHTML = 
+            '<tr><td colspan="5" style="text-align: center; padding: 40px;"><div class="empty-state"><h3>❌ Error realizando búsqueda</h3></div></td></tr>';
+    }
+}
+
+// Mostrar información de búsqueda
+function showSearchInfo(data, query, category, minAttack, element) {
+    const searchInfo = document.getElementById('searchInfo');
+    
+    if (!query && !category && !minAttack && !element) {
+        searchInfo.classList.remove('active');
+        return;
+    }
+    
+    const total = data.total !== undefined ? data.total : (data.length || 0);
+    let filters = [];
+    
+    if (query) filters.push(`<strong>Búsqueda:</strong> "${query}"`);
+    if (category) {
+        const cat = allCategories.find(c => c.id == category);
+        filters.push(`<strong>Categoría:</strong> ${cat ? cat.name : category}`);
+    }
+    if (minAttack) filters.push(`<strong>Ataque mín:</strong> ${minAttack}`);
+    if (element) filters.push(`<strong>Elemento:</strong> ${element}`);
+    
+    searchInfo.innerHTML = `
+        <strong>🔍 Resultados:</strong> ${total} ${total === 1 ? 'arma encontrada' : 'armas encontradas'}
+        ${filters.length > 0 ? '<br>' + filters.join(' • ') : ''}
+    `;
+    searchInfo.classList.add('active');
+}
+
+// Limpiar búsqueda
+function clearSearch() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('categoryFilter').value = '';
+    document.getElementById('minAttackFilter').value = '';
+    document.getElementById('elementFilter').value = '';
+    document.getElementById('searchInfo').classList.remove('active');
+    
+    // Recargar todas las armas
+    loadWeapons();
+}
+
+// Agregar evento Enter en el input de búsqueda
+document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
+        });
+    }
+});
 
 // Cargar datos al iniciar
 loadCategories();
